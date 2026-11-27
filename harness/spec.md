@@ -78,6 +78,11 @@ không server, tiến độ lưu local (SQLite qua drift).
 ## Việc của người (không agent nào tự làm)
 
 Paul: tài khoản store, ký số/keystore, thiết bị thật, Closed Testing/TestFlight,
-duyệt nội dung, applicationId + RevenueCat ID, bật branch protection.
+duyệt nội dung, applicationId + RevenueCat ID.
 James: code + vận hành harness trong Muse + đồng bộ file kế hoạch.
 Claude: thiết kế build/test/pipeline nội dung.
+
+Ghi chú quản trị repo: ruleset "Protect main" đã bật sẵn (có bypass cho chủ
+repo). CODEOWNERS chỉ có một tài khoản (@yameshop95-png) và GitHub không cho
+tác giả tự duyệt PR của mình, nên merge thực tế đi qua bypass của chủ repo —
+lớp chặn thật là tests.lock chạy trong CI, không phải lượt duyệt.
