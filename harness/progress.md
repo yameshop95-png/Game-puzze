@@ -2,6 +2,38 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-28 — S1-02: mở contract lưu tiến độ drift (James)
+
+- S1-02 (lưu tiến độ bằng drift): James dừng ở cổng
+  contract (comment 7228829524); Paul chốt Hướng B —
+  nâng Flutter lên 3.50.1 thay vì hạ drift (comment
+  7228865069); James kiểm chứng Hướng B đầu-cuối tại
+  máy (comment 7229079307: drift_dev 2.35.3 resolve
+  sạch trên SDK mới, 142/142 test pass, analyze chỉ đỏ
+  1 dòng deprecation ở lib/main.dart). Opus chốt
+  SA-DB-1..7 (comment 7229335986): PK (image_id, mode)
+  + best_time nullable int giây; mode hằng chuỗi
+  'jigsaw'/'word' trong file DAO; settings key–value;
+  markSolved upsert giữ solved_at lần đầu + best_time
+  = min; production mở qua drift_flutter
+  (game_puzzle.sqlite), test qua NativeDatabase file;
+  schemaVersion = 1 + dump schema tại S1-02 + Test ID
+  UNIT-DB-01..; đổi import material.dart →
+  material_ui trong feat PR.
+- PR docs/s1-02-contract (PR này): contract S1-02 +
+  mở rộng pre-check S1-02 trong tool/check_e_step.sh +
+  khối S1 trong tool/evaluate.sh chạy thêm S1-02, và
+  dòng progress này.
+- Cổng cứng: 3 chỗ flutter-version trong
+  .github/workflows/ci.yml phải sửa qua GitHub web UI
+  (3.38.1 → 3.50.1) TRƯỚC khi push nhánh feat của
+  chồng S1-02; contract + test PR mở bình thường ngay.
+- Còn treo: chờ Opus duyệt contract → James viết test
+  UNIT-DB-01..16 (PR test/S1-02) → code feat; hai điểm
+  suy ra chờ Opus xác nhận khi soát (luật null của
+  best_time §5.1, thứ tự solvedIds + settings nằm
+  trong ProgressDao §5.2).
+
 ## 2026-11-28 — S1-01: test đã khóa, AssetLoader đã code (James)
 
 - PR `test/S1-01`: `asset_loader_test.dart` (UNIT-AL-01..12)
