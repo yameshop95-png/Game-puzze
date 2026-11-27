@@ -2,6 +2,26 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-27 — Phase E1: engine Board đã code (James, nhánh feat/E1-board)
+
+- PR #9 đã squash merge vào main (commit 7a149ae) sau khi Opus OK và
+  CI 4/4 xanh. Chồng PR #10/#11 đã đồng bộ lên main mới 7a149ae: phía
+  James rebase thật tại máy; hai nhánh remote được cập nhật bằng một
+  commit đồng bộ cây (connector GitHub không force-push được) — cây
+  của hai nhánh khớp bản rebase, đã đối chiếu từng file. (Đính chính
+  câu cũ "PR #10 đã rebase lên main mới": bản rebase lúc đó mới có ở
+  máy James, chưa lên remote — Opus bắt lỗi này khi soát PR #11.)
+- `lib/engine/jigsaw/board.dart`: Board/piece thuần Dart theo contract
+  E1 — gồm cả `toMap()`/`fromMap()` (quyết định 10) và hai test mới
+  ENG-J-16 (bất biến, seed cố định) và ENG-J-17 (vòng đi-về) được thêm
+  theo rà kiến trúc của Claude; tests.lock khóa lại (hash 60c7de3a… —
+  ENG-J-17 được bổ sung theo Opus: ghim dạng xuất của toMap(), vòng
+  đi-về qua JSON thật, các ca sai kiểu dữ liệu và khóa không chuẩn).
+- **Ghi chú cho E2 (theo Opus):** khi mở contract E2 phải thêm mapping
+  `E2)` vào `tool/check_e_step.sh` trong cùng PR, nếu không CI đỏ.
+- Các lọt purity nhỏ còn lại (Random tách dòng với ngoặc, `DateTime . now`)
+  để PR sau theo Opus.
+
 ## 2026-11-27 — PR #8 vòng sửa 2 theo Opus review (James)
 
 Opus: OK có điều kiện, chưa merge (C1/C3/C4/T4 đạt; C2/T1/T2/T3 đạt một
@@ -29,26 +49,6 @@ phần). Đã sửa trong PR #8:
   Generator vẫn sửa được tool/ qua Bash; người viết test và Generator
   đều là James, nên lớp chặn thật là tests.lock + người duyệt độc lập.
 - Sau vòng này PR #8 chuyển từ draft sang ready theo yêu cầu của Opus.
-
-## 2026-11-27 — Phase E1: engine Board đã code (James, nhánh feat/E1-board)
-
-- PR #9 đã squash merge vào main (commit 7a149ae) sau khi Opus OK và
-  CI 4/4 xanh. Chồng PR #10/#11 đã đồng bộ lên main mới 7a149ae: phía
-  James rebase thật tại máy; hai nhánh remote được cập nhật bằng một
-  commit đồng bộ cây (connector GitHub không force-push được) — cây
-  của hai nhánh khớp bản rebase, đã đối chiếu từng file. (Đính chính
-  câu cũ "PR #10 đã rebase lên main mới": bản rebase lúc đó mới có ở
-  máy James, chưa lên remote — Opus bắt lỗi này khi soát PR #11.)
-- `lib/engine/jigsaw/board.dart`: Board/piece thuần Dart theo contract
-  E1 — gồm cả `toMap()`/`fromMap()` (quyết định 10) và hai test mới
-  ENG-J-16 (bất biến, seed cố định) và ENG-J-17 (vòng đi-về) được thêm
-  theo rà kiến trúc của Claude; tests.lock khóa lại (hash 60c7de3a… —
-  ENG-J-17 được bổ sung theo Opus: ghim dạng xuất của toMap(), vòng
-  đi-về qua JSON thật, các ca sai kiểu dữ liệu và khóa không chuẩn).
-- **Ghi chú cho E2 (theo Opus):** khi mở contract E2 phải thêm mapping
-  `E2)` vào `tool/check_e_step.sh` trong cùng PR, nếu không CI đỏ.
-- Các lọt purity nhỏ còn lại (Random tách dòng với ngoặc, `DateTime . now`)
-  để PR sau theo Opus.
 
 ## 2026-11-27 — PR #9 vòng sửa 5 theo Opus soát lại (James)
 
