@@ -327,14 +327,15 @@ void main() {
       isTrue,
       reason: 'drift_schemas/drift_schema_v1.json must be committed',
     );
-    final decoded = jsonDecode(file.readAsStringSync()) as Map;
+    final decoded = jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
     final entities = decoded['entities'] as List;
-    Map tableNamed(String name) => entities.cast<Map>().firstWhere(
-      (e) => e['type'] == 'table' && e['data']['name'] == name,
-    );
+    Map<String, dynamic> tableNamed(String name) => entities
+        .cast<Map<String, dynamic>>()
+        .firstWhere((e) => e['type'] == 'table' && e['data']['name'] == name);
     final progress = tableNamed('progress');
     expect(progress['data']['explicit_pk'], ['image_id', 'mode']);
-    final columns = (progress['data']['columns'] as List).cast<Map>();
+    final columns = (progress['data']['columns'] as List)
+        .cast<Map<String, dynamic>>();
     final bestTime = columns.firstWhere((c) => c['name'] == 'best_time');
     expect(bestTime['nullable'], isTrue);
     final settings = tableNamed('settings');
