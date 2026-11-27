@@ -2,6 +2,19 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-27 — E3: test đã khóa, engine PlacePiece + TrayOrder đã code (James)
+
+- PR `test/E3`: `place_piece_test.dart` (ENG-J-30..43 + ENG-J-53)
+  và `tray_order_test.dart` (ENG-J-44..52), khóa hash vào tests.lock
+  (d7ba3df3… / c7d2f4f4… — đã gồm dart format trước khi khóa). PR `feat/E3-place-piece` xếp chồng:
+  `lib/engine/jigsaw/commands.dart` (PlacePiece/PlaceResult đồng bộ,
+  ô bận → rejectedOccupied không đổi bàn, moved kiểm ô đích trước)
+  và `lib/engine/jigsaw/tray_order.dart` (hoán vị cố định, fromList
+  kiểm hoán vị, visible lọc qua hàm isPlaced của tầng trên).
+- Theo cách merge của E1/E2: không merge PR #15/#16 riêng; cả chồng
+  #15 + #16 + feat/E3-place-piece squash một lần vào main khi
+  evaluate E3 xanh và Opus OK.
+
 ## 2026-11-27 — E2 đã merge; mở contract E3 (James)
 
 - PR #14 (feat/E2-snap) đã squash merge vào main (commit a7b1ec),
