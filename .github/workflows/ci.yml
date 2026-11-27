@@ -35,6 +35,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: "3.38.1"
       - name: Pub get (when a Flutter project exists)
         run: |
           if [ -f pubspec.yaml ]; then flutter pub get; else echo "no pubspec.yaml yet - skipping"; fi
@@ -62,6 +63,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: "3.38.1"
       - name: Flutter test with coverage (when a Flutter project exists)
         run: |
           if [ -f pubspec.yaml ]; then flutter test --coverage; else echo "no pubspec.yaml yet - skipping"; fi
@@ -74,6 +76,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: "3.38.1"
       - name: Run integration tests on emulator (when present)
         uses: reactivecircus/android-emulator-runner@v2
         with:
