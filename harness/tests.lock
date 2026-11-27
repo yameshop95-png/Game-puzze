@@ -1,2 +1,4 @@
 60c7de3a744d3774720bea5c8f19f8f995c8b599e144cf6ac3e0f2d54d0bad21  test/engine/jigsaw/board_test.dart
 eb9d5b5fea6f5c99a345aa90a8b22cd51d4401d69645224af0c807316f85981f  test/engine/jigsaw/snap_test.dart
+d62072936533e0b56bc5627809d9a53672507b3427301e20ef55309bf53731a6  test/engine/jigsaw/place_piece_test.dart
+3b447c577fd53e08e83f94ad55e7dca8d76e5265b75750f140cfb250b7ced0f6  test/engine/jigsaw/tray_order_test.dart
