@@ -2,6 +2,19 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-27 — E1 đã merge; mở contract E2 (James)
+
+- PR #11 (feat/E1-board) đã squash merge vào main (commit f0850ae),
+  CI 4/4 xanh, Opus OK. **PR #10 (test/E1) đã đóng — nội dung đã bao
+  hàm trong PR #11** (theo yêu cầu ghi chép của Claude sau merge).
+  Engine Board/piece (ENG-J-01..17) chính thức ở trên main.
+- Mở PR `docs/e2-contract`: contract E2 (hút mảnh + dung sai, test
+  ENG-J-18..29), kèm mapping `E2)` trong `tool/check_e_step.sh` và
+  ghi chú `placed: null` trong quyết định 10 của contract E1.
+- Các mục không chặn còn gom lại cho bước sau: trần trên cho
+  `gridSize` (làm khi viết contract S1), các ca purity còn lọt đã ghi
+  ở PR #9.
+
 ## 2026-11-27 — Phase E1: engine Board đã code (James, nhánh feat/E1-board)
 
 - PR #9 đã squash merge vào main (commit 7a149ae) sau khi Opus OK và
