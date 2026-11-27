@@ -1,0 +1,18 @@
+# Lint configuration (Phase 0.3).
+# Base: flutter_lints. Language strictness is turned on for the whole
+# project - the puzzle engine in lib/engine must stay strictly typed.
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+
+linter:
+  rules:
+    # Keep production code free of debug prints (tool/ uses stdout.writeln).
+    avoid_print: true

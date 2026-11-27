@@ -1,2 +1,24 @@
 __pycache__/
 .pytest_cache/
+
+# Flutter / Dart
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+*.iml
+.idea/
+
+# Secrets, signing and local tooling (PR #7 review)
+coverage/
+.fvm/
+test/goldens/failures/
+google-services.json
+GoogleService-Info.plist
+*.env
+.DS_Store
+key.properties
+*.jks

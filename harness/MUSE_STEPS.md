@@ -1,4 +1,4 @@
-# Hướng dẫn cho Muse: game-puzze (Flutter, Android trước, iOS sau)
+# Hướng dẫn cho Muse: game-puzzle (Flutter, Android trước, iOS sau)
 
 Tài liệu do cố vấn Opus soạn, dựa trên các quyết định đã chốt trong issue #93 của repo Restaurant-app. Muse làm theo từng bước theo thứ tự. Mỗi bước kết thúc bằng một commit. Bước nào chưa "xong" thì chưa sang bước sau.
 
@@ -13,7 +13,7 @@ Bối cảnh đã chốt:
 ## 1. Cấu trúc thư mục
 
 ```
-game-puzze/
+game-puzzle/
 ├─ README.md                      # giữ nguyên
 ├─ content_pipeline/              # chuyển nguyên nhóm, không sửa nội dung
 │  ├─ validate_manifest.py  manifest.schema.json  CONTENT_PIPELINE.md
@@ -60,7 +60,7 @@ game-puzze/
 - Rủi ro: chỉ chuyển một phần file sẽ làm import hỏng. Không sửa file test để "cho chạy".
 
 **0.2. Khởi tạo Flutter**
-- Đầu ra: `flutter create --org <hỏi Paul> --platforms android,ios --project-name game_puzze .`. Ghi phiên bản Flutter vào `.fvmrc` hoặc vào một file phụ (không sửa README gốc).
+- Đầu ra: `flutter create --org <hỏi Paul> --platforms android,ios --project-name game_puzzle .`. Ghi phiên bản Flutter vào `.fvmrc` hoặc vào một file phụ (không sửa README gốc).
 - Kiểm chứng: `flutter analyze` báo 0 issue; `flutter test` pass; `flutter build apk --debug` thành công.
 - Rủi ro: `flutter create .` có thể ghi đè README. Kiểm tra `git diff README.md` phải rỗng.
 
