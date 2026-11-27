@@ -1,13 +1,14 @@
 # DRAFT - not active. Move to .github/CODEOWNERS after review by Paul and James.
+# Owner handle is the real login of the repo owner. James works through the owner's account, so no separate handle is listed.
 # Changes under these paths need approval from a code owner.
 
-/test/                      @REPLACE_JAMES @REPLACE_PAUL
-/integration_test/          @REPLACE_JAMES @REPLACE_PAUL
-/.maestro/                  @REPLACE_JAMES @REPLACE_PAUL
-/test_driver/               @REPLACE_JAMES @REPLACE_PAUL
-/harness/tests.lock         @REPLACE_JAMES @REPLACE_PAUL
-/harness/thresholds.yaml    @REPLACE_JAMES @REPLACE_PAUL
-/harness/ux_rubric.md       @REPLACE_JAMES @REPLACE_PAUL
-/config/                    @REPLACE_JAMES @REPLACE_PAUL
-/content/                   @REPLACE_PAUL
-/content_pipeline/          @REPLACE_JAMES @REPLACE_PAUL
+/test/                      @yameshop95-png
+/integration_test/          @yameshop95-png
+/.maestro/                  @yameshop95-png
+/test_driver/               @yameshop95-png
+/harness/tests.lock         @yameshop95-png
+/harness/thresholds.yaml    @yameshop95-png
+/harness/ux_rubric.md       @yameshop95-png
+/config/                    @yameshop95-png
+/content/                   @yameshop95-png
+/content_pipeline/          @yameshop95-png

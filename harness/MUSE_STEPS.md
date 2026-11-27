@@ -114,7 +114,7 @@ Với mỗi bước E, người viết test (Contract) viết test và khóa has
 **E5. Cổng 75%**
 - `unlocked(level+1) = solved_owned(level) / total_owned(level) > threshold`, threshold đọc từ config (0.75).
 - Test: 19/25 thì mở, 18/25 thì không. Chưa sở hữu đủ thì chỉ tính hình đã sở hữu.
-- Câu hỏi cần James trả lời: nếu chỉ có 2 hình miễn phí thì cổng định nghĩa thế nào? (Xem mục 5.)
+- Đã trả lời (issue #2): ngưỡng = số nguyên nhỏ nhất lớn hơn 75% số hình hiện có của cấp, tính theo số hình thực tế (25 → 19, 10 → 8). Tầng miễn phí không áp cổng. Giải bằng chế độ nào cũng tính.
 
 **E6. Random**
 - Rút từ kho đã sở hữu, có seed nên tái lập được, không lặp K hình vừa giải, bật tắt bằng cờ config.
@@ -272,11 +272,13 @@ Quyền truy cập và CODEOWNERS do người thiết lập. Không agent nào t
 - Duyệt contact sheet.
 - Xác nhận quy định Closed Testing tại thời điểm nộp.
 
-**Hỏi James**
-- Định nghĩa cổng 75% khi người chơi chỉ có hình miễn phí, và cách tính cho chủ đề chưa đủ 25 hình. Soft launch chỉ có 10 hình mỗi chủ đề, vậy 75% của 10 là 8 hình?
-- Có tính cả hai chế độ chơi vào cổng không.
-- Chọn nhà cung cấp analytics.
-- Cách phân phối nội dung trả phí: đóng gói sẵn trong app hay tải về sau khi mua.
+**Đã trả lời bởi James (issue #2, Paul đã duyệt)**
+- Cổng 75%: tính theo số hình thực tế của cấp (25 → 19, 10 → 8). Tầng miễn phí không áp cổng.
+- Cổng tính cả hai chế độ chơi.
+- Analytics: Firebase Analytics.
+- Nội dung trả phí: soft launch (50 hình) và tầng miễn phí đóng gói sẵn trong app. Cấp 2–5 tải về sau khi mua bằng Play Asset Delivery (Android) và on-demand resources (iOS), entitlement của RevenueCat quyết định pack nào được tải.
+
+**Hỏi James (còn mở)**
 - Đổi schema drift sau khi đã phát hành.
 - Mọi thay đổi với file test hoặc ngưỡng.
 
