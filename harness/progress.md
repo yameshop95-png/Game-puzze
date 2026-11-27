@@ -2,6 +2,45 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-28 — E6: test đã khóa, engine random picker đã code (James)
+
+- PR `test/E6`: `random_picker_test.dart` (ENG-R-01..15), khóa
+  hash vào tests.lock (404b728e… — đã gồm dart format trước khi
+  khóa). PR `feat/E6-random` xếp chồng:
+  `lib/engine/content_mode/random_picker.dart` — hàm thuần
+  top-level `pick(pool, recentlySolved, k, rng)`, K_eff =
+  min(K, pool.length − 1), cửa sổ đếm trên các phần tử gần nhất
+  thuộc pool (ngoài pool / trùng không chiếm suất), một lần
+  `nextInt` trên eligible giữ thứ tự pool, pool rỗng → null,
+  k < 0 / pool trùng → ArgumentError. Chỉ import dart:math.
+- Kiểm chứng tại máy: `bash tool/evaluate.sh E6` XANH TOÀN BỘ —
+  pre-checks, purity, tests lock, analyze PASS; 130/130 test
+  (ENG-J-01..53 + ENG-W-01..35 + ENG-P-01..27 + ENG-R-01..15);
+  engine coverage 92,4%.
+- Theo cách merge của E1–E5: không merge PR #24/#25 riêng; cả
+  chồng #24 + #25 + feat/E6-random squash một lần vào main khi
+  Opus OK.
+
+## 2026-11-28 — E5 đã merge; mở contract E6 (James)
+
+- PR #23 (feat/E5-progress) đã squash merge vào main (commit
+  f746bbe), CI 4/4 xanh, Opus OK toàn chồng #21/#22/#23; PR
+  #21/#22 đã đóng "bao hàm trong #23". Engine cổng 75%
+  (ENG-P-01..27) chính thức ở trên main — 115/115 test, engine
+  coverage 92,0%.
+- E6 (Random): James dừng ở cổng contract, Opus chốt 7/7 điểm
+  theo khuyến nghị của James (comment 7226957118) — hàm thuần
+  top-level `pick(pool, recentlySolved, k, rng)`, pool là
+  `List<String>` image_id, K = 10 chính thức với
+  K_eff = min(K, pool.length − 1), pool rỗng → null, một lần
+  `nextInt` trên eligible giữ thứ tự pool, chỉ
+  `random_picker.dart` (không curated.dart), test ENG-R-01..15.
+- PR docs/e6-contract (PR này): contract E6 + mapping `E6)`
+  subdir="content_mode" trong tool/check_e_step.sh + việc phụ
+  Claude giao ở comment merge E5: sửa cây §1 trong
+  harness/MUSE_STEPS.md (progression/unlock_rule.dart →
+  progress/gate.dart).
+
 ## 2026-11-27 — E5: test đã khóa, engine cổng 75% đã code (James)
 
 - PR `test/E5`: `gate_test.dart` (ENG-P-01..27), khóa hash vào

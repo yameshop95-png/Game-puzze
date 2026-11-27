@@ -27,7 +27,7 @@ game-puzzle/
 │  ├─ engine/                     # THUẦN DART: không import package:flutter
 │  │  ├─ jigsaw/ (board.dart, piece.dart, snap.dart, commands.dart)
 │  │  ├─ word/   (sentence.dart, validator.dart)        # nhiều thứ tự hợp lệ
-│  │  ├─ progression/ (unlock_rule.dart)                # cổng 75%, chỉ tính nội dung đã sở hữu
+│  │  ├─ progress/ (gate.dart)                           # cổng 75%, chỉ tính nội dung đã sở hữu
 │  │  └─ content_mode/ (curated.dart, random_picker.dart)  # có seed, không lặp
 │  ├─ data/                       # drift: db.dart, tables/, dao/, migrations/
 │  ├─ features/{home, theme_select, jigsaw_play, word_play, store, settings}/
