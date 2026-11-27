@@ -2,14 +2,22 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-27 — Đổi tên puzze → puzzle (Paul chốt sau review PR #7)
+
+"puzze" là lỗi chính tả — đổi toàn bộ sang **puzzle**: project `game_puzzle`,
+applicationId `com.paperfox.game_puzzle`, bundle iOS `com.paperfox.gamePuzzle`,
+nhãn hiển thị "Game Puzzle". Đổi được vì chưa publish; sau publish
+applicationId khóa vĩnh viễn. Tên repo GitHub đổi sau (Settings → Rename,
+link cũ tự chuyển hướng). flutter analyze sạch sau khi đổi.
+
 ## 2026-11-27 — Giai đoạn 0 (James, trong Muse) — nhánh chore/phase-0-repo-ci
 
 - **0.1 XONG.** `git mv` toàn bộ pipeline vào `content_pipeline/`
   (validate_manifest.py, manifest.schema.json, CONTENT_PIPELINE.md, tests/).
   Kiểm chứng: `python3 -m pytest tests -q` trong content_pipeline → **25 passed**.
 - **0.2 XONG (trừ build APK tại máy James — xem mục Treo).**
-  `flutter create --org com.paperfox --platforms android,ios --project-name game_puzze`
-  trên Flutter 3.38.1 (ghim trong .fvmrc). applicationId `com.paperfox.game_puzze`
+  `flutter create --org com.paperfox --platforms android,ios --project-name game_puzzle`
+  trên Flutter 3.38.1 (ghim trong .fvmrc). applicationId `com.paperfox.game_puzzle`
   (org do Paul chốt: Paperfox — tên studio trung tính, vì org là công khai trên
   trang Play và không đổi được sau phát hành). README.md không bị đụng (diff rỗng).
   Kiểm chứng: `flutter analyze` → **No issues found**; `flutter test` → **passed**.
