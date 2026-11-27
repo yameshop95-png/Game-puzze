@@ -54,3 +54,21 @@
   tự tải được libsqlite3 cho máy host — James đã nạp tay file .so chính hãng vào
   cache của hook để `flutter test` chạy. Trên máy thường và CI không cần bước này.
 - iOS: chưa kiểm chứng build iOS (cần macOS — máy của Paul/Claude ở các mốc sau).
+
+### Phụ lục CI (27/11/2026, sau khi viết mục trên)
+
+- Lần chạy CI đầy đủ đầu tiên (run #8) fail ở `flutter analyze`: ci.yml chưa ghim
+  phiên bản Flutter nên máy CI cài bản mới hơn nhiều (hậu 3.47), analyzer của nó
+  báo lỗi deprecated trên chính file template của Flutter. Đã ghim
+  flutter-version 3.38.1 khớp .fvmrc (commit 8357250).
+- Run #9: analyze đạt, nhưng **build APK debug fail trong 17 giây** với thông
+  điệp trần là "25.0.5.1" — log cho thấy cảnh báo restricted-method của JDK, chỉ
+  xuất hiện trên JDK 24+, và 25.0.5.1 chính là phiên bản JVM mặc định của máy CI:
+  Gradle 8.14 chỉ hỗ trợ chạy trên Java tới 24 nên chết ngay ở JDK 25. Đã ghim
+  Temurin JDK 17 cho job static. Cùng run đó, job android-it fail vì khởi động
+  emulator ~11 phút rồi timeout dù chưa có integration_test/ — đã sửa: chỉ cài
+  Flutter và bật emulator khi thư mục integration_test/ tồn tại.
+- **Run #10 (commit 9b23543): XANH TOÀN BỘ** — content 15s, static 4m53s (build
+  APK debug đạt, 3m56s), unit 53s, android-it 10s (bỏ qua emulator đúng thiết
+  kế). Cổng 0.2 như vậy đã được kiểm chứng trên CI. Cảnh báo Node 20 deprecated
+  trên các action là nhiễu, không ảnh hưởng kết quả.
