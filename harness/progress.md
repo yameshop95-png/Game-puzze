@@ -30,6 +30,23 @@ phần). Đã sửa trong PR #8:
   đều là James, nên lớp chặn thật là tests.lock + người duyệt độc lập.
 - Sau vòng này PR #8 chuyển từ draft sang ready theo yêu cầu của Opus.
 
+## 2026-11-27 — PR #9 vòng sửa 4 theo code-review của Claude (James)
+
+- **Chặn merge (mục 1):** cổng pre-check tách thành script riêng
+  `tool/check_e_step.sh`; evaluate.sh gọi script này; CI thêm bước
+  "E-step pre-checks" vào job Static gates (chạy cho mọi contract E*
+  khi test/engine tồn tại). Hết cảnh PR tự xóa test + tự cập nhật
+  tests.lock mà CI vẫn xanh.
+- **Mục 2:** strip comment nay có ý thức chuỗi (tool/strip_comments.awk
+  dùng chung): chuỗi chứa `//` hay tên API cấm không còn làm sai cổng;
+  nội dung chuỗi được làm trắng khi quét API cấm.
+- **Mục 3:** directive nằm giữa dòng sau dấu `;` (ví dụ
+  `library engine; import 'dart:io';`) nay cũng bị kiểm.
+- **Mục 4:** khai báo test xuống dòng (`test(` cuối dòng, tên ở dòng
+  kế) được nối dòng trước khi so khớp ID — hết FAIL oan.
+- **Mục 5:** mô tả PR #9 đã cập nhật đúng số file; các mục vòng sửa
+  trong file này giữ nguyên thứ tự thời gian, câu chữ đã rà lại.
+
 ## 2026-11-27 — PR #9 vòng sửa 3 theo Opus review (James)
 
 - **Pre-check ID (lỗ chặn merge):** strip comment khỏi các file test
