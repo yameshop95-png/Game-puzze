@@ -32,8 +32,12 @@ echo "Evaluating sprint: $SPRINT"
 precheck_e() {
   bash tool/check_e_step.sh "$SPRINT"
 }
+precheck_s1() {
+  bash tool/check_e_step.sh S1-01
+}
 case "$SPRINT" in
   E*) gate "E-step pre-checks" precheck_e ;;
+  S1) gate "S-step pre-checks" precheck_s1 ;;
 esac
 if [ -f content/manifest.json ]; then
   gate "content validator" python3 content_pipeline/validate_manifest.py content/manifest.json

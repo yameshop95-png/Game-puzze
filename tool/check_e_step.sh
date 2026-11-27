@@ -23,6 +23,45 @@ if [ ! -f "$contract" ]; then
   echo "FAIL: $contract not found"
   exit 1
 fi
+# S-step pre-checks (S1-01, contract SA-6): the S steps live outside
+# lib/engine + test/engine, so they get their own branch here instead
+# of the engine mapping below. Checks, mirroring the E-step ones:
+#   - the step's test file and lib file exist;
+#   - no skipped tests in the step's test directory;
+#   - every UNIT-AL ID in the contract is declared as test('<ID>...'
+#     in the step's test file.
+if [ "$STEP" = "S1-01" ]; then
+  s_test="test/data/asset_loader_test.dart"
+  s_lib="lib/services/asset_loader.dart"
+  if [ ! -f "$s_test" ]; then
+    echo "FAIL: $s_test does not exist"
+    exit 1
+  fi
+  if [ ! -f "$s_lib" ]; then
+    echo "FAIL: $s_lib does not exist"
+    exit 1
+  fi
+  skip_hits=$( { grep -rnE "skip[[:space:]]*:" test/data | grep -vE "skip[[:space:]]*:[[:space:]]*false([^A-Za-z0-9_]|$)" || true
+                 grep -rnE "@Skip\(|markTestSkipped\(" test/data || true; } )
+  if [ -n "$skip_hits" ]; then
+    echo "FAIL: skipped tests found under test/data:"
+    echo "$skip_hits"
+    exit 1
+  fi
+  s_ids=$(grep -oE "UNIT-AL-[0-9]+" "$contract" | sort -u)
+  if [ -z "$s_ids" ]; then
+    echo "FAIL: no UNIT-AL test IDs found in $contract"
+    exit 1
+  fi
+  for id in $s_ids; do
+    if ! grep -qE "^[[:space:]]*(test|testWidgets)\([[:space:]]*['\"]${id}([^0-9]|$)" "$s_test"; then
+      echo "FAIL: contract test ID $id has no test() declaration in $s_test"
+      exit 1
+    fi
+  done
+  echo "check_e_step: OK for $STEP"
+  exit 0
+fi
 subdir=""
 case "$STEP" in
   E1) subdir="jigsaw" ;;
