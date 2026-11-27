@@ -2,6 +2,35 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-27 — PR #8 vòng sửa 1 theo Opus review (James)
+
+Opus: OK có điều kiện, chưa merge. Đã sửa trong PR #8:
+
+- **C1:** ENG-J-07 viết lại — ca "N²−1 đúng + 1 sai" là không thể (chỉ còn
+  một ô trống, chính là ô nhà của mảnh cuối). Ca mới: N²−2 đúng + 2 mảnh
+  cuối đổi chỗ → isComplete false; gỡ ra đặt lại đúng → true; cộng ca
+  N²−1 đúng + mảnh cuối chưa đặt → false.
+- **C2:** CI và evaluate.sh thống nhất luật từ Giai đoạn E: có
+  lib/engine/** hoặc test/engine/** mà thiếu harness/tests.lock hoặc
+  thiếu coverage thì FAIL (sửa .github/workflows/ci.yml).
+- **C3:** CODEOWNERS thêm /tool/, /.github/, /harness/contracts/;
+  deny list của Generator thêm tool/** (contracts/** và .github/** đã có).
+  Ghi rõ trong E1.md §4 mục 7.
+- **C4:** E1.md ghi rõ vai trò: James viết contract + test (vai Contract),
+  Claude/Opus duyệt PR test/E1 (khác Generator), Generator code sau khi
+  test khóa. **Rủi ro ghi nhận: CODEOWNERS chỉ có một tài khoản
+  (@yameshop95-png), tác giả không tự duyệt được PR của mình nên merge đi
+  qua bypass của chủ repo; lớp chặn thật là tests.lock + CI + Opus review.**
+- **T1:** thêm `int? pieceAt(CellPos)` vào API + ENG-J-15 (gồm ca đặt lại
+  vào ô mình đang chiếm = no-op; chính sách thả vào ô bận ở tầng UI chốt
+  ở E3). **T2:** ENG-J-14 ô ngoài lưới → ArgumentError. **T3:** ENG-J-02
+  và ENG-J-13 khẳng định homeOf(id) == CellPos(id ~/ N, id % N).
+  **T4:** K = 10 chỉ tạm thời; chốt ở E6 với K_eff = min(K, pool − 1).
+- **T5+T6 để PR riêng, xong trước feat/E1-board:** evaluate.sh kiểm file
+  test tồn tại/nằm trong lock/đủ ID/không skip + lib/engine/jigsaw/ tồn
+  tại; check_engine_pure.sh bịt lỗ import tương đối ./ ../ thoát khỏi
+  lib/engine và cấm thêm Random.secure(), DateTime.timestamp(), Stopwatch.
+
 ## 2026-11-27 — Giai đoạn E bắt đầu: contract E1 (James) — nhánh docs/e1-contract
 
 - Viết `harness/contracts/E1.md` theo MUSE_STEPS §E1: mô hình Board/piece
