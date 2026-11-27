@@ -2,6 +2,81 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-27 — PR #8 vòng sửa 2 theo Opus review (James)
+
+Opus: OK có điều kiện, chưa merge (C1/C3/C4/T4 đạt; C2/T1/T2/T3 đạt một
+phần). Đã sửa trong PR #8:
+
+- **Chặn merge — quy trình test-trước-code:** §4 mục 5 chốt cách (a) PR
+  xếp chồng: test/E1 được duyệt + khóa hash nhưng không merge vào main
+  một mình (main chưa có lib/engine sẽ đỏ); feat/E1-board dựng chồng
+  trên test/E1, cả hai xanh mới merge vào main. Cách (b) khung API ném
+  UnimplementedError đã cân nhắc, không chọn.
+- **ENG-J-10 viết chi tiết:** B ở Y đặt vào X đang có A → StateError;
+  khẳng định pieceAt/positionOf/cả hai count không đổi sau lỗi; thêm ca
+  B đang ở khay thì sau lỗi vẫn ở khay.
+- **Ghi chú thiết kế mới (T3):** xáo khay chỉ đổi thứ tự hiển thị, không
+  đổi id/ô nhà; khóa lưu trữ là (image_id, gridSize, pieceId); nhãn
+  Semantics dùng số thứ tự trong khay, không dùng id (id lộ ô nhà).
+- **ci.yml:** bước coverage thêm nhánh elif — có test/engine mà thiếu
+  lib/engine thì FAIL.
+- **Việc rẻ làm luôn:** ENG-J-14 liệt kê (−1,0), (0,3), (3,0) + khẳng
+  định trạng thái không đổi; ENG-J-08/09/12 dùng số cụ thể trên bàn 3×3;
+  gateThreshold — thresholds.yaml là nguồn duy nhất, config là bản sao,
+  CI thêm bước kiểm hai giá trị bằng nhau (đã tự kiểm: 0.75 == 0.75);
+  game_config.json format nhiều dòng, có newline cuối file.
+- **Rủi ro ghi thêm vào E1.md:** deny list chỉ chặn Edit/Write —
+  Generator vẫn sửa được tool/ qua Bash; người viết test và Generator
+  đều là James, nên lớp chặn thật là tests.lock + người duyệt độc lập.
+- Sau vòng này PR #8 chuyển từ draft sang ready theo yêu cầu của Opus.
+
+## 2026-11-27 — PR #8 vòng sửa 1 theo Opus review (James)
+
+Opus: OK có điều kiện, chưa merge. Đã sửa trong PR #8:
+
+- **C1:** ENG-J-07 viết lại — ca "N²−1 đúng + 1 sai" là không thể (chỉ còn
+  một ô trống, chính là ô nhà của mảnh cuối). Ca mới: N²−2 đúng + 2 mảnh
+  cuối đổi chỗ → isComplete false; gỡ ra đặt lại đúng → true; cộng ca
+  N²−1 đúng + mảnh cuối chưa đặt → false.
+- **C2:** CI và evaluate.sh thống nhất luật từ Giai đoạn E: có
+  lib/engine/** hoặc test/engine/** mà thiếu harness/tests.lock hoặc
+  thiếu coverage thì FAIL (sửa .github/workflows/ci.yml).
+- **C3:** CODEOWNERS thêm /tool/, /.github/, /harness/contracts/;
+  deny list của Generator thêm tool/** (contracts/** và .github/** đã có).
+  Ghi rõ trong E1.md §4 mục 7.
+- **C4:** E1.md ghi rõ vai trò: James viết contract + test (vai Contract),
+  Claude/Opus duyệt PR test/E1 (khác Generator), Generator code sau khi
+  test khóa. **Rủi ro ghi nhận: CODEOWNERS chỉ có một tài khoản
+  (@yameshop95-png), tác giả không tự duyệt được PR của mình nên merge đi
+  qua bypass của chủ repo; lớp chặn thật là tests.lock + CI + Opus review.**
+- **T1:** thêm `int? pieceAt(CellPos)` vào API + ENG-J-15 (gồm ca đặt lại
+  vào ô mình đang chiếm = no-op; chính sách thả vào ô bận ở tầng UI chốt
+  ở E3). **T2:** ENG-J-14 ô ngoài lưới → ArgumentError. **T3:** ENG-J-02
+  và ENG-J-13 khẳng định homeOf(id) == CellPos(id ~/ N, id % N).
+  **T4:** K = 10 chỉ tạm thời; chốt ở E6 với K_eff = min(K, pool − 1).
+- **T5+T6 để PR riêng, xong trước feat/E1-board:** evaluate.sh kiểm file
+  test tồn tại/nằm trong lock/đủ ID/không skip + lib/engine/jigsaw/ tồn
+  tại; check_engine_pure.sh bịt lỗ import tương đối ./ ../ thoát khỏi
+  lib/engine và cấm thêm Random.secure(), DateTime.timestamp(), Stopwatch.
+
+## 2026-11-27 — Giai đoạn E bắt đầu: contract E1 (James) — nhánh docs/e1-contract
+
+- Viết `harness/contracts/E1.md` theo MUSE_STEPS §E1: mô hình Board/piece
+  thuần Dart (lưới N×N từ config, id mảnh = chỉ số ô nhà, trạng thái
+  đặt/chưa đặt), 13 test ENG-J-01..13, cổng nghiệm thu qua evaluate.sh.
+  Chưa viết code engine, chưa viết test (test khóa hash qua PR test/E1 sau).
+- Đề xuất `config/game_config.json`: gridSizes [3,4,6],
+  snapToleranceRatio 0.2, gateThreshold 0.75, freePuzzlesPerTheme 2, và
+  randomNoRepeatWindow 10 (K chưa chốt ở MUSE_STEPS — chờ Opus/Paul duyệt).
+- Siết `tool/check_engine_pure.sh` theo yêu cầu review của Opus: danh sách
+  import cho phép (chặn dart:ui, dart:io, package:flutter*, import ngoài
+  lib/engine) + cấm DateTime.now() và Random() không seed. Đã kiểm chứng
+  3 trường hợp: chưa có lib/engine → bỏ qua; file xấu → FAIL đúng dòng;
+  file sạch → OK.
+- Sửa câu về README ở mục 0.2 theo ghi nhận của Claude khi merge PR #7.
+- Theo quy trình Paul chốt 27/11: PR này đăng lên issue #2, Claude/Opus
+  kiểm tra, OK thì Claude tự merge.
+
 ## 2026-11-27 — Đổi tên puzze → puzzle (Paul chốt sau review PR #7)
 
 "puzze" là lỗi chính tả — đổi toàn bộ sang **puzzle**: project `game_puzzle`,
@@ -19,7 +94,7 @@ link cũ tự chuyển hướng). flutter analyze sạch sau khi đổi.
   `flutter create --org com.paperfox --platforms android,ios --project-name game_puzzle`
   trên Flutter 3.38.1 (ghim trong .fvmrc). applicationId `com.paperfox.game_puzzle`
   (org do Paul chốt: Paperfox — tên studio trung tính, vì org là công khai trên
-  trang Play và không đổi được sau phát hành). README.md không bị đụng (diff rỗng).
+  trang Play và không đổi được sau phát hành). README.md không bị flutter create đụng vào (diff rỗng tại thời điểm 0.2); tiêu đề của nó được đổi thành "Game-puzzle" ở commit đổi tên ngày 27/11/2026.
   Kiểm chứng: `flutter analyze` → **No issues found**; `flutter test` → **passed**.
 - **0.3 XONG.** analysis_options.yaml: flutter_lints + strict-casts/inference/raw-types.
   Package: drift ^2.35.4, drift_flutter ^0.3.1, purchases_flutter ^11.0.6;

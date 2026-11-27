@@ -1,0 +1,11 @@
+{
+  "gridSizes": [
+    3,
+    4,
+    6
+  ],
+  "snapToleranceRatio": 0.2,
+  "gateThreshold": 0.75,
+  "randomNoRepeatWindow": 10,
+  "freePuzzlesPerTheme": 2
+}
