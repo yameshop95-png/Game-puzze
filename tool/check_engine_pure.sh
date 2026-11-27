@@ -5,7 +5,8 @@
 #    dart:convert, relative paths, and package:game_puzzle/engine/**.
 #    This bans package:flutter*, dart:ui, dart:io, flutter_test, and any
 #    import reaching outside lib/engine.
-#  - Banned APIs: DateTime.now() and Random() with no seed.
+#  - Banned APIs: DateTime.now(), DateTime.timestamp(), Random() with
+#    no seed, Random.secure(), and Stopwatch.
 #    Inject clock and rng instead (harness/MUSE_STEPS.md, Phase E risks).
 set -u
 if [ ! -d lib/engine ]; then
@@ -29,14 +30,35 @@ $imports
 EOF
 fi
 
-hits=$(grep -rnE "DateTime\.now\(|Random\([[:space:]]*\)" lib/engine || true)
+hits=$(grep -rnE "DateTime\.now\(|DateTime\.timestamp\(|Random\([[:space:]]*\)|Random\.secure\(|Stopwatch\(" lib/engine || true)
 if [ -n "$hits" ]; then
-  echo "FAIL: banned APIs in lib/engine (DateTime.now / unseeded Random):"
+  echo "FAIL: banned APIs in lib/engine (DateTime.now/timestamp, unseeded or secure Random, Stopwatch):"
   echo "$hits"
   fail=1
 fi
 
+# Relative imports must resolve to a target INSIDE lib/engine; a ../ chain
+# that escapes the engine package is a purity hole (T6).
+engine_root=$(realpath -m lib/engine)
+while IFS= read -r dart_file; do
+  rel_imports=$(grep -E "^[[:space:]]*(import|export)[[:space:]]+['\"]\.{1,2}/" "$dart_file" || true)
+  if [ -n "$rel_imports" ]; then
+    while IFS= read -r line; do
+      uri=$(printf '%s' "$line" | sed -E "s/.*['\"]([^'\"]+)['\"].*/\1/")
+      resolved=$(realpath -m "$(dirname "$dart_file")/$uri")
+      case "$resolved" in
+        "$engine_root"/*) ;;
+        *) echo "FAIL: relative import escapes lib/engine: $dart_file -> $uri"; fail=1 ;;
+      esac
+    done <<EOF2
+$rel_imports
+EOF2
+  fi
+done <<EOF
+$(find lib/engine -name '*.dart' -type f)
+EOF
+
 if [ "$fail" -ne 0 ]; then
   exit 1
 fi
-echo "check_engine_pure: OK (import allowlist respected, no DateTime.now()/Random() in lib/engine)"
+echo "check_engine_pure: OK (import allowlist + relative-import containment + no banned APIs in lib/engine)"
