@@ -1,0 +1,1 @@
+# Second check of CODEOWNERS and ruleset on main. Close the PR after checking.
