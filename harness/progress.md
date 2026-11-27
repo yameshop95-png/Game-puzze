@@ -30,6 +30,106 @@ phần). Đã sửa trong PR #8:
   đều là James, nên lớp chặn thật là tests.lock + người duyệt độc lập.
 - Sau vòng này PR #8 chuyển từ draft sang ready theo yêu cầu của Opus.
 
+## 2026-11-27 — Phase E1: engine Board đã code (James, nhánh feat/E1-board)
+
+- PR #9 đã squash merge vào main (commit 7a149ae) sau khi Opus OK và
+  CI 4/4 xanh. PR #10 (test/E1) đã rebase lên main mới.
+- `lib/engine/jigsaw/board.dart`: Board/piece thuần Dart theo contract
+  E1 — gồm cả `toMap()`/`fromMap()` (quyết định 10) và hai test mới
+  ENG-J-16 (bất biến, seed cố định) và ENG-J-17 (vòng đi-về) được thêm
+  theo rà kiến trúc của Claude; tests.lock khóa lại (hash 6d3ed0e4…).
+- **Ghi chú cho E2 (theo Opus):** khi mở contract E2 phải thêm mapping
+  `E2)` vào `tool/check_e_step.sh` trong cùng PR, nếu không CI đỏ.
+- Các lọt purity nhỏ còn lại (Random tách dòng với ngoặc, `DateTime . now`)
+  để PR sau theo Opus.
+
+## 2026-11-27 — PR #9 vòng sửa 5 theo Opus soát lại (James)
+
+- **Bắt buộc:** nội suy chuỗi `${...}` là code thật — strip_comments.awk
+  nay chuyển sang trạng thái code trong `${...}` (đếm độ sâu ngoặc, hỗ
+  trợ chuỗi lồng nhau) nên `'${DateTime.now()}'` không còn lọt cổng
+  purity. Viết lại strip_comments.awk thành máy trạng thái có ngăn xếp
+  ngữ cảnh.
+- Raw string (`r'...'`) được nhận diện đúng: không escape, không nội
+  suy — hết ca `r'C:\'` nuốt mất dấu đóng chuỗi.
+- check_e_step: mirror làm trắng nội dung chuỗi ba nháy (khai báo test
+  nằm trong `'''...'''` không còn được tính); regex skip nhận cả
+  `skip : true` có dấu cách.
+- CI: bước E-step pre-checks FAIL khi test/engine tồn tại mà không có
+  contract `E*.md` nào.
+
+## 2026-11-27 — PR #9 vòng sửa 4 theo code-review của Claude (James)
+
+- **Chặn merge (mục 1):** cổng pre-check tách thành script riêng
+  `tool/check_e_step.sh`; evaluate.sh gọi script này; CI thêm bước
+  "E-step pre-checks" vào job Static gates (chạy cho mọi contract E*
+  khi test/engine tồn tại). Hết cảnh PR tự xóa test + tự cập nhật
+  tests.lock mà CI vẫn xanh.
+- **Mục 2:** strip comment nay có ý thức chuỗi (tool/strip_comments.awk
+  dùng chung): chuỗi chứa `//` hay tên API cấm không còn làm sai cổng;
+  nội dung chuỗi được làm trắng khi quét API cấm.
+- **Mục 3:** directive nằm giữa dòng sau dấu `;` (ví dụ
+  `library engine; import 'dart:io';`) nay cũng bị kiểm.
+- **Mục 4:** khai báo test xuống dòng (`test(` cuối dòng, tên ở dòng
+  kế) được nối dòng trước khi so khớp ID — hết FAIL oan.
+- **Mục 5:** mô tả PR #9 đã cập nhật đúng số file; các mục vòng sửa
+  trong file này giữ nguyên thứ tự thời gian, câu chữ đã rà lại.
+
+## 2026-11-27 — PR #9 vòng sửa 3 theo Opus review (James)
+
+- **Pre-check ID (lỗ chặn merge):** strip comment khỏi các file test
+  trước khi tìm; khai báo test phải bắt đầu dòng; ID phải kết thúc ở
+  ranh giới không-phải-số — `// test('ENG-J-15'…`, `/* test(… */`, chuỗi
+  ký tự chứa test('… và `test('ENG-J-150'` đều không còn tính cho
+  ENG-J-15.
+- **Purity:** gom directive import/export/part qua nhiều dòng tới dấu
+  `;` rồi mới lấy URI; `part '…'` nay được kiểm như import; cấm thêm
+  `Random.new`.
+- **evaluate.sh:** nhánh ánh xạ gói đổi thành `*)` để bước lạ (ví dụ Ex)
+  cũng FAIL "chưa ánh xạ gói" thay vì lọt.
+- **spec.md:** ghi đúng tên hiển thị của hai required check là
+  "Static gates" và "Unit tests + coverage" (không phải static/unit).
+
+## 2026-11-27 — PR #9 vòng sửa theo Opus review (James)
+
+Opus tái hiện được 5 lỗ trong các cổng của PR #9; đã sửa hết trong PR này:
+
+- **Purity 1 — import có điều kiện:** nay kiểm MỌI URI trong ngoặc kép trên
+  dòng import/export (trước chỉ lấy chuỗi cuối).
+- **Purity 2 — package URI chứa `..`:** `package:game_puzzle/engine/../…`
+  bị chặn (kiểm từng đoạn đường dẫn).
+- **Purity 3 — import tương đối trần:** `import 'piece.dart';` (không ./)
+  được coi là tương đối và kiểm resolve như thường (trước bị chặn oan).
+- **Purity 4 — API cấm:** khớp theo token trọn vẹn, có hay không có ()
+  cũng tính (tear-off `DateTime.now`, `Random.secure`, `Stopwatch` đều
+  bắt); strip comment trước khi quét nên comment nhắc tên API không bị
+  chặn oan; `SeededRandom()` và `Random(seed)` hợp lệ vẫn qua.
+- **Pre-check 5 — ID test:** chỉ tính khi ID xuất hiện dạng `test('<ID>`
+  hoặc `testWidgets('<ID>` trong file `*_test.dart` (comment/.txt không
+  tính). Bổ sung bắt skip dạng `@Skip(`, `markTestSkipped(`, `skip:` kèm
+  lý do (trừ `skip: false`). Bước E* chưa có ánh xạ gói → FAIL rõ ràng
+  thay vì bỏ qua thầm lặng. Ghi chú trong evaluate.sh: CI không chạy
+  script này — cổng pre-check chỉ chạy khi Evaluator chạy tay.
+
+Kiểm chứng: 14 ca probe purity + 9 ca probe pre-check của James đều
+đúng kỳ vọng. (Đính chính 27/11: câu này trước đây ghi "kể cả các ca
+Opus đã tái hiện" — chưa chính xác: Opus soát vòng sau vẫn tìm được ca
+ID nằm trong comment còn lọt; đã sửa ở vòng sửa tiếp theo bên trên.)
+
+## 2026-11-27 — T5+T6: siết evaluate.sh và check_engine_pure.sh (James)
+
+Theo yêu cầu của Opus ở PR #8 (PR riêng, xong trước feat/E1-board):
+
+- **T5 — evaluate.sh:** thêm cổng "E-step pre-checks" cho các bước E*:
+  contract phải tồn tại; lib/engine/<gói của bước> phải tồn tại (E1 →
+  jigsaw); test/engine phải tồn tại; cấm test bị skip; mọi test ID nêu
+  trong contract phải xuất hiện dưới test/engine. Kiểm chứng trên cây
+  stub: đủ ID → qua hết các cổng; xóa ENG-J-15 → FAIL nêu đúng ID.
+- **T6 — check_engine_pure.sh:** import tương đối phải resolve vào bên
+  trong lib/engine (chặn ../ thoát ra ngoài); cấm thêm
+  DateTime.timestamp(), Random.secure(), Stopwatch(). Kiểm chứng: import
+  nội bộ OK; import thoát ra ngoài FAIL; 3 API cấm đều bắt được.
+
 ## 2026-11-27 — PR #8 vòng sửa 1 theo Opus review (James)
 
 Opus: OK có điều kiện, chưa merge. Đã sửa trong PR #8:
