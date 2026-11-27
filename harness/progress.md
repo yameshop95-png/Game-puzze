@@ -2,6 +2,27 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-27 — E4: test đã khóa, engine ghép chữ đã code (James)
+
+- PR `test/E4`: `sentence_test.dart` (ENG-W-01..11 + ENG-W-29..35)
+  và `validator_test.dart` (ENG-W-12..28), khóa hash vào tests.lock
+  (5d2ef2d5… / 6a837212… — đã gồm dart format trước khi khóa). Giá
+  trị ghim shuffle/scramble (ENG-W-09/10/26) là đầu ra Fisher–Yates
+  theo contract chạy với Random(seed) của Dart VM. PR
+  `feat/E4-word` xếp chồng: `lib/engine/word/sentence.dart`
+  (WordToken/Sentence token = từ, mảnh chỉ-dấu-câu gộp trước/sau,
+  WordBoard bất biến + lệnh PickToken/ReturnToken, lỗi chia
+  ArgumentError/StateError như PlacePiece) và
+  `lib/engine/word/validator.dart` (AnswerValidator so theo khóa
+  chuẩn hóa, kiểm multiset khi tạo, scramble không trùng đáp án,
+  canScramble theo đếm dãy khóa phân biệt).
+- Kiểm chứng tại máy: `bash tool/evaluate.sh E4` XANH TOÀN BỘ —
+  pre-checks, purity, tests lock, analyze PASS; 88/88 test
+  (ENG-J-01..53 + ENG-W-01..35); engine coverage 91,6%.
+- Theo cách merge của E1–E3: không merge PR #18/#19 riêng; cả
+  chồng #18 + #19 + feat/E4-word squash một lần vào main khi Opus
+  OK.
+
 ## 2026-11-27 — E3 đã merge; mở contract E4 (James)
 
 - PR #17 (feat/E3-place-piece) đã squash merge vào main (commit
