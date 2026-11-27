@@ -13,7 +13,8 @@
 #    Comments AND string contents are blanked before scanning
 #    (tool/strip_comments.awk, string-aware), so a comment or a string
 #    literal merely naming a banned API does not fail the gate, and code
-#    after a string on the same line is still scanned. Seeded
+#    after a string on the same line is still scanned. String
+#    interpolation ${...} is real code and IS scanned. Seeded
 #    Random(seed) and names that merely contain a banned word
 #    (SeededRandom) are allowed.
 #    Inject clock and rng instead (harness/MUSE_STEPS.md, Phase E risks).
