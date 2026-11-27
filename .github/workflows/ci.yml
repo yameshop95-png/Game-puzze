@@ -32,6 +32,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -76,21 +80,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Check for integration tests
+        id: itcheck
+        run: |
+          if [ -d integration_test ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "integration_test/ not present yet - emulator step skipped"
+          fi
       - uses: subosito/flutter-action@v2
+        if: steps.itcheck.outputs.present == 'true'
         with:
           channel: stable
           flutter-version: "3.38.1"
-      - name: Run integration tests on emulator (when present)
+      - name: Run integration tests on emulator
+        if: steps.itcheck.outputs.present == 'true'
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 30
           arch: x86_64
-          script: |
-            if [ -d integration_test ]; then
-              flutter test integration_test
-            else
-              echo "integration_test/ not present yet - skipping"
-            fi
+          script: flutter test integration_test
 
 # Maestro E2E flows run locally / on a schedule (see harness/MUSE_STEPS.md 0.5);
 # they are not part of the per-PR CI until a device farm is chosen.
