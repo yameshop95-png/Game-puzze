@@ -59,8 +59,7 @@ void main() {
       expect(board.placedCount, 1);
     });
 
-    test('ENG-J-33 E3-P04 rejected move leaves the piece where it was',
-        () {
+    test('ENG-J-33 E3-P04 rejected move leaves the piece where it was', () {
       final board = Board.square(3);
       board.place(0, const CellPos(2, 2));
       board.place(4, const CellPos(1, 1));
@@ -85,8 +84,7 @@ void main() {
       expect(board.toMap(), before);
     });
 
-    test('ENG-J-35 E3-P06 invalid piece id or cell throws ArgumentError',
-        () {
+    test('ENG-J-35 E3-P06 invalid piece id or cell throws ArgumentError', () {
       final board = Board.square(3);
       board.place(4, const CellPos(1, 1));
       final before = board.toMap();
@@ -109,8 +107,7 @@ void main() {
       expect(board.toMap(), before);
     });
 
-    test('ENG-J-36 E3-P07 drag and tap paths produce the same result',
-        () {
+    test('ENG-J-36 E3-P07 drag and tap paths produce the same result', () {
       // Drag path: E2 snapTarget decides the cell, then the command.
       final dragBoard = Board.square(3);
       final snapped = dragBoard.snapTarget(1.5, 1.5, 0.2);
