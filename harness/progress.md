@@ -2,6 +2,34 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-27 — PR #8 vòng sửa 2 theo Opus review (James)
+
+Opus: OK có điều kiện, chưa merge (C1/C3/C4/T4 đạt; C2/T1/T2/T3 đạt một
+phần). Đã sửa trong PR #8:
+
+- **Chặn merge — quy trình test-trước-code:** §4 mục 5 chốt cách (a) PR
+  xếp chồng: test/E1 được duyệt + khóa hash nhưng không merge vào main
+  một mình (main chưa có lib/engine sẽ đỏ); feat/E1-board dựng chồng
+  trên test/E1, cả hai xanh mới merge vào main. Cách (b) khung API ném
+  UnimplementedError đã cân nhắc, không chọn.
+- **ENG-J-10 viết chi tiết:** B ở Y đặt vào X đang có A → StateError;
+  khẳng định pieceAt/positionOf/cả hai count không đổi sau lỗi; thêm ca
+  B đang ở khay thì sau lỗi vẫn ở khay.
+- **Ghi chú thiết kế mới (T3):** xáo khay chỉ đổi thứ tự hiển thị, không
+  đổi id/ô nhà; khóa lưu trữ là (image_id, gridSize, pieceId); nhãn
+  Semantics dùng số thứ tự trong khay, không dùng id (id lộ ô nhà).
+- **ci.yml:** bước coverage thêm nhánh elif — có test/engine mà thiếu
+  lib/engine thì FAIL.
+- **Việc rẻ làm luôn:** ENG-J-14 liệt kê (−1,0), (0,3), (3,0) + khẳng
+  định trạng thái không đổi; ENG-J-08/09/12 dùng số cụ thể trên bàn 3×3;
+  gateThreshold — thresholds.yaml là nguồn duy nhất, config là bản sao,
+  CI thêm bước kiểm hai giá trị bằng nhau (đã tự kiểm: 0.75 == 0.75);
+  game_config.json format nhiều dòng, có newline cuối file.
+- **Rủi ro ghi thêm vào E1.md:** deny list chỉ chặn Edit/Write —
+  Generator vẫn sửa được tool/ qua Bash; người viết test và Generator
+  đều là James, nên lớp chặn thật là tests.lock + người duyệt độc lập.
+- Sau vòng này PR #8 chuyển từ draft sang ready theo yêu cầu của Opus.
+
 ## 2026-11-27 — PR #8 vòng sửa 1 theo Opus review (James)
 
 Opus: OK có điều kiện, chưa merge. Đã sửa trong PR #8:
