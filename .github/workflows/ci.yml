@@ -51,10 +51,13 @@ jobs:
           if [ -f pubspec.yaml ]; then flutter build apk --debug; else echo "no pubspec.yaml yet - skipping"; fi
       - name: Engine purity
         run: bash tool/check_engine_pure.sh
-      - name: Tests lock (when locked)
+      - name: Tests lock (Phase E - fail if engine/tests exist without a lock)
         run: |
           if [ -f harness/tests.lock ]; then
             bash tool/verify_tests_lock.sh
+          elif [ -d lib/engine ] || [ -d test/engine ]; then
+            echo "FAIL: engine code/tests exist but harness/tests.lock is missing"
+            exit 1
           else
             echo "harness/tests.lock not present yet (locks start at Phase E) - skipping"
           fi
@@ -71,9 +74,17 @@ jobs:
       - name: Flutter test with coverage (when a Flutter project exists)
         run: |
           if [ -f pubspec.yaml ]; then flutter test --coverage; else echo "no pubspec.yaml yet - skipping"; fi
-      - name: Engine coverage >= 80% (when engine exists)
+      - name: Engine coverage >= 80% (required when engine exists)
         run: |
-          if [ -d lib/engine ]; then dart tool/check_coverage.dart; else echo "lib/engine not present yet - skipping"; fi
+          if [ -d lib/engine ]; then
+            if [ ! -f coverage/lcov.info ]; then
+              echo "FAIL: lib/engine exists but coverage/lcov.info is missing"
+              exit 1
+            fi
+            dart tool/check_coverage.dart
+          else
+            echo "lib/engine not present yet - skipping"
+          fi
 
   android-it:
     name: Android integration tests
