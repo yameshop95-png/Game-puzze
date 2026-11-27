@@ -24,7 +24,9 @@
       "Edit(content/**)",
       "Write(content/**)",
       "Bash(git push --force*)",
-      "Bash(flutter pub publish*)"
+      "Bash(flutter pub publish*)",
+      "Edit(tool/**)",
+      "Write(tool/**)"
     ]
   }
 }
