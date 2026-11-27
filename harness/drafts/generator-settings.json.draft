@@ -1,0 +1,27 @@
+{
+  "_comment": "DRAFT - not active. Copy to .claude/settings.json for the Generator session only after review. Evaluator sessions use a separate config.",
+  "permissions": {
+    "deny": [
+      "Edit(test/**)",
+      "Write(test/**)",
+      "Edit(integration_test/**)",
+      "Write(integration_test/**)",
+      "Edit(.maestro/**)",
+      "Write(.maestro/**)",
+      "Edit(test_driver/**)",
+      "Write(test_driver/**)",
+      "Edit(harness/tests.lock)",
+      "Write(harness/tests.lock)",
+      "Edit(harness/thresholds.yaml)",
+      "Write(harness/thresholds.yaml)",
+      "Edit(harness/ux_rubric.md)",
+      "Write(harness/ux_rubric.md)",
+      "Edit(config/**)",
+      "Write(config/**)",
+      "Edit(content/**)",
+      "Write(content/**)",
+      "Bash(git push --force*)",
+      "Bash(flutter pub publish*)"
+    ]
+  }
+}
