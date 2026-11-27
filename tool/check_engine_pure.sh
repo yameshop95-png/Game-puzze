@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Gate: lib/engine must stay pure Dart.
-# Rules (tightened for Phase E; round 2 per the Opus review of PR #9):
+# Rules (tightened for Phase E; round 3 per the Opus review of PR #9):
 #  - Imports/exports/parts: EVERY quoted URI of each directive is checked
 #    (conditional imports included; directives are joined across lines up
 #    to ";"). Allowed: dart:core, dart:math, dart:collection,
