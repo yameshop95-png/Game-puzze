@@ -29,6 +29,7 @@ case "$STEP" in
   E2) subdir="jigsaw" ;;
   E3) subdir="jigsaw" ;;
   E4) subdir="word" ;;
+  E5) subdir="progress" ;;
   *)
     echo "FAIL: no engine package mapping for step $STEP (add it to check_e_step.sh before running this step)"
     exit 1 ;;
