@@ -10,8 +10,7 @@ import 'package:game_puzzle/engine/jigsaw/tray_order.dart';
 
 void main() {
   group('TrayOrder E3', () {
-    test('ENG-J-44 E3-T01 shuffled order is a permutation of all ids',
-        () {
+    test('ENG-J-44 E3-T01 shuffled order is a permutation of all ids', () {
       final tray = TrayOrder.shuffled(pieceCount: 9, rng: Random(42));
       expect(tray.length, 9);
       final sorted = tray.toList()..sort();
@@ -44,10 +43,7 @@ void main() {
         () => TrayOrder.fromList(const [0, 1, 3]),
         throwsArgumentError,
       ); // out of range
-      expect(
-        () => TrayOrder.fromList(const []),
-        throwsArgumentError,
-      ); // empty
+      expect(() => TrayOrder.fromList(const []), throwsArgumentError); // empty
     });
 
     test('ENG-J-48 E3-T05 visible hides placed pieces', () {
