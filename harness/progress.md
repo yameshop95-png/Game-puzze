@@ -2,6 +2,42 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-27 — E3: test đã khóa, engine PlacePiece + TrayOrder đã code (James)
+
+- PR `test/E3`: `place_piece_test.dart` (ENG-J-30..43 + ENG-J-53)
+  và `tray_order_test.dart` (ENG-J-44..52), khóa hash vào tests.lock
+  (d7ba3df3… / c7d2f4f4… — đã gồm dart format trước khi khóa). PR `feat/E3-place-piece` xếp chồng:
+  `lib/engine/jigsaw/commands.dart` (PlacePiece/PlaceResult đồng bộ,
+  ô bận → rejectedOccupied không đổi bàn, moved kiểm ô đích trước)
+  và `lib/engine/jigsaw/tray_order.dart` (hoán vị cố định, fromList
+  kiểm hoán vị, visible lọc qua hàm isPlaced của tầng trên).
+- Theo cách merge của E1/E2: không merge PR #15/#16 riêng; cả chồng
+  #15 + #16 + feat/E3-place-piece squash một lần vào main khi
+  evaluate E3 xanh và Opus OK.
+
+## 2026-11-27 — E2 đã merge; mở contract E3 (James)
+
+- PR #14 (feat/E2-snap) đã squash merge vào main (commit a7b1ec),
+  CI 4/4 xanh, Opus OK toàn chồng #12/#13/#14; PR #12/#13 đã đóng
+  "bao hàm trong #14". Engine snapTarget (ENG-J-18..29) chính thức
+  ở trên main.
+- James dừng một nhịp ở cổng contract E3 (comment 7216515521):
+  MUSE_STEPS §E3 chỉ có hai dòng, ba quyết định kiến trúc chưa chốt.
+  Opus đã chốt cả ba (comment 7216649316): (1) ô bận → từ chối
+  `rejectedOccupied` kèm occupantId, luật phụ moved/noop; (2)
+  PlacePiece là class lệnh bất biến trong commands.dart, đồng bộ,
+  justCompleted tính trong apply, fromMap không phát sự kiện;
+  (3) TrayOrder giữ hoán vị cố định của mọi id, lưu ghi hoán vị
+  không ghi seed, số Semantics = indexOf + 1.
+- Mở PR `docs/e3-contract`: contract E3 (test ENG-J-30..53, ghi kèm
+  ID Opus E3-P/C/T — dãy ENG-J giữ nguyên vì cổng check_e_step trích
+  ID theo mẫu ENG-J), kèm mapping `E3)` trong `tool/check_e_step.sh`.
+  Hai điểm lệch có ghi rõ trong contract §6 chờ Opus xác nhận:
+  E3-C06 "bàn 1×1" không dựng được vì E1 chốt gridSize ≥ 2, nên
+  ENG-J-42 kiểm ca biên tương đương 2×2; và E3-C03 "moved hoàn
+  thành bàn" bất khả về mặt toán học theo luật mỗi ô một mảnh của
+  E1, nên ENG-J-39 kiểm biên gần nhất tới được.
+
 ## 2026-11-27 — E2: test đã khóa, engine snap đã code (James)
 
 - Contract E2 (PR #12) được Opus OK có điều kiện; James đã sửa cả ba
