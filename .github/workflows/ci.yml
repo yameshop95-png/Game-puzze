@@ -74,6 +74,13 @@ jobs:
           else
             echo "harness/tests.lock not present yet (locks start at Phase E) - skipping"
           fi
+      - name: E-step pre-checks (when engine tests exist)
+        if: hashFiles('test/engine/**') != ''
+        run: |
+          for c in harness/contracts/E*.md; do
+            [ -e "$c" ] || continue
+            bash tool/check_e_step.sh "$(basename "$c" .md)"
+          done
 
   unit:
     name: Unit tests + coverage
