@@ -30,6 +30,20 @@ phần). Đã sửa trong PR #8:
   đều là James, nên lớp chặn thật là tests.lock + người duyệt độc lập.
 - Sau vòng này PR #8 chuyển từ draft sang ready theo yêu cầu của Opus.
 
+## 2026-11-27 — T5+T6: siết evaluate.sh và check_engine_pure.sh (James)
+
+Theo yêu cầu của Opus ở PR #8 (PR riêng, xong trước feat/E1-board):
+
+- **T5 — evaluate.sh:** thêm cổng "E-step pre-checks" cho các bước E*:
+  contract phải tồn tại; lib/engine/<gói của bước> phải tồn tại (E1 →
+  jigsaw); test/engine phải tồn tại; cấm test bị skip; mọi test ID nêu
+  trong contract phải xuất hiện dưới test/engine. Kiểm chứng trên cây
+  stub: đủ ID → qua hết các cổng; xóa ENG-J-15 → FAIL nêu đúng ID.
+- **T6 — check_engine_pure.sh:** import tương đối phải resolve vào bên
+  trong lib/engine (chặn ../ thoát ra ngoài); cấm thêm
+  DateTime.timestamp(), Random.secure(), Stopwatch(). Kiểm chứng: import
+  nội bộ OK; import thoát ra ngoài FAIL; 3 API cấm đều bắt được.
+
 ## 2026-11-27 — PR #8 vòng sửa 1 theo Opus review (James)
 
 Opus: OK có điều kiện, chưa merge. Đã sửa trong PR #8:
