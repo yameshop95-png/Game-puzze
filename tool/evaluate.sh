@@ -23,6 +23,47 @@ gate() {
 }
 
 echo "Evaluating sprint: $SPRINT"
+
+# Phase E pre-checks (T5, Opus review of PR #8): for E-steps the contract's
+# tests must exist under test/engine, carry every test ID named in the
+# contract, and contain no skipped tests; the step's engine package must
+# exist. Lock membership and hashes are enforced by the tests-lock gate.
+precheck_e() {
+  local contract="harness/contracts/${SPRINT}.md"
+  if [ ! -f "$contract" ]; then
+    echo "FAIL: $contract not found"
+    return 1
+  fi
+  local subdir=""
+  case "$SPRINT" in
+    E1) subdir="jigsaw" ;;
+  esac
+  if [ -n "$subdir" ] && [ ! -d "lib/engine/$subdir" ]; then
+    echo "FAIL: lib/engine/$subdir does not exist"
+    return 1
+  fi
+  if [ ! -d test/engine ]; then
+    echo "FAIL: test/engine does not exist"
+    return 1
+  fi
+  if grep -rnE "skip:[[:space:]]*(true|'|\")" test/engine >/dev/null 2>&1; then
+    echo "FAIL: skipped tests found under test/engine:"
+    grep -rnE "skip:" test/engine
+    return 1
+  fi
+  local ids id
+  ids=$(grep -oE "[A-Z]+-[A-Z]-[0-9]+" "$contract" | sort -u)
+  for id in $ids; do
+    if ! grep -rq "$id" test/engine; then
+      echo "FAIL: contract test ID $id not found under test/engine"
+      return 1
+    fi
+  done
+  echo "E-step pre-checks OK for $SPRINT"
+}
+case "$SPRINT" in
+  E*) gate "E-step pre-checks" precheck_e ;;
+esac
 if [ -f content/manifest.json ]; then
   gate "content validator" python3 content_pipeline/validate_manifest.py content/manifest.json
 else
