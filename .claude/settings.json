@@ -1,5 +1,4 @@
 {
-  "_comment": "DRAFT - not active. Copy to .claude/settings.json for the Generator session only after review. Evaluator sessions use a separate config.",
   "permissions": {
     "deny": [
       "Edit(test/**)",

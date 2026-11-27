@@ -1,5 +1,3 @@
-# DRAFT - not active. Move to .github/CODEOWNERS after review by Paul and James.
-# Owner handle is the real login of the repo owner. James works through the owner's account, so no separate handle is listed.
 # Changes under these paths need approval from a code owner.
 
 /test/                      @yameshop95-png
