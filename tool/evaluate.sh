@@ -39,7 +39,7 @@ precheck_e() {
   local subdir=""
   case "$SPRINT" in
     E1) subdir="jigsaw" ;;
-    E[0-9]*)
+    *)
       echo "FAIL: no engine package mapping for step $SPRINT (add it to precheck_e before running this step)"
       return 1 ;;
   esac
@@ -61,17 +61,53 @@ precheck_e() {
     echo "$skip_hits"
     return 1
   fi
-  # Every contract test ID must appear as an actual test declaration
-  # (test('<ID> or testWidgets('<ID>) inside a *_test.dart file — an ID
-  # mentioned in a comment or a non-test file does not count.
+  # Every contract test ID must appear as an actual test declaration in a
+  # *_test.dart file: comments are stripped first, the declaration must
+  # start the line, and the ID must end at a non-digit boundary (so a
+  # commented-out test, a string literal, or ENG-J-150 never counts for
+  # ENG-J-15).
+  local mirror f rel
+  mirror=$(mktemp -d)
+  while IFS= read -r f; do
+    rel=${f#test/engine/}
+    mkdir -p "$mirror/$(dirname "$rel")"
+    awk '
+      BEGIN { inblock = 0 }
+      {
+        line = $0; out = ""
+        while (length(line) > 0) {
+          if (inblock) {
+            end = index(line, "*/")
+            if (end == 0) { line = "" }
+            else { line = substr(line, end + 2); inblock = 0 }
+          } else {
+            start = index(line, "/*")
+            slash = index(line, "//")
+            if (slash > 0 && (start == 0 || slash < start)) {
+              out = out substr(line, 1, slash - 1); line = ""
+            } else if (start > 0) {
+              out = out substr(line, 1, start - 1)
+              line = substr(line, start + 2); inblock = 1
+            } else {
+              out = out line; line = ""
+            }
+          }
+        }
+        print out
+      }' "$f" > "$mirror/$rel"
+  done <<EOFM
+$(find test/engine -name '*_test.dart' -type f)
+EOFM
   local ids id
   ids=$(grep -oE "[A-Z]+-[A-Z]-[0-9]+" "$contract" | sort -u)
   for id in $ids; do
-    if ! grep -rqE "(test|testWidgets)\('$id" --include='*_test.dart' test/engine; then
+    if ! grep -rqE "^[[:space:]]*(test|testWidgets)\([[:space:]]*['\"]${id}([^0-9]|$)" --include='*_test.dart' "$mirror"; then
       echo "FAIL: contract test ID $id has no test() declaration in a *_test.dart under test/engine"
+      rm -rf "$mirror"
       return 1
     fi
   done
+  rm -rf "$mirror"
   echo "E-step pre-checks OK for $SPRINT"
 }
 case "$SPRINT" in
