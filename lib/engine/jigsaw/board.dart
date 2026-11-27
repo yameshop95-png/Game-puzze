@@ -3,6 +3,8 @@
 /// dart:io, no clock, no unseeded randomness.
 library;
 
+import 'dart:math';
+
 /// A cell on the grid. Immutable, compared by value.
 class CellPos {
   final int row; // 0..N-1
@@ -197,6 +199,44 @@ class Board {
 
   /// Whether every piece is home.
   bool get isComplete => correctlyPlacedCount == totalPieces;
+
+  /// The cell a drop point snaps to, or null when no cell centre is
+  /// close enough (contract E2). [x] and [y] are the centre of the
+  /// dragged piece in cell units (x along columns, y along rows); the
+  /// centre of cell (row, col) is (col + 0.5, row + 0.5).
+  /// [toleranceRatio] is the snap distance as a ratio of the cell
+  /// side: the drop snaps to the nearest centre when the Euclidean
+  /// distance to it is <= [toleranceRatio] (boundary included). Ties
+  /// go to the smaller row, then the smaller col. An occupied cell is
+  /// returned like any other; the caller decides what to do. This is
+  /// a pure query: it never changes the board. Throws [ArgumentError]
+  /// for a non-finite drop point or a tolerance outside (0, 1].
+  CellPos? snapTarget(double x, double y, double toleranceRatio) {
+    if (!x.isFinite || !y.isFinite) {
+      throw ArgumentError('drop point must be finite, got ($x, $y)');
+    }
+    if (!toleranceRatio.isFinite || toleranceRatio <= 0 || toleranceRatio > 1) {
+      throw ArgumentError.value(
+        toleranceRatio,
+        'toleranceRatio',
+        'must be finite and in (0, 1]',
+      );
+    }
+    CellPos? best;
+    var bestDistance = double.infinity;
+    for (var row = 0; row < _gridSize; row++) {
+      for (var col = 0; col < _gridSize; col++) {
+        final dx = x - (col + 0.5);
+        final dy = y - (row + 0.5);
+        final distance = sqrt(dx * dx + dy * dy);
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          best = CellPos(row, col);
+        }
+      }
+    }
+    return bestDistance <= toleranceRatio ? best : null;
+  }
 
   /// Exports the board state using JSON-basic types only:
   /// `{'gridSize': N, 'placed': {'<pieceId>': [row, col], ...}}`.

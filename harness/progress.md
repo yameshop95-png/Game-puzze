@@ -2,6 +2,20 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-27 — E2: test đã khóa, engine snap đã code (James)
+
+- Contract E2 (PR #12) được Opus OK có điều kiện; James đã sửa cả ba
+  mục trong PR #12 (dung sai phải hữu hạn + ENG-J-24 thêm NaN/±∞;
+  điểm thả là tâm mảnh + luồng E3 và snap vẫn trả ô bận trong
+  ENG-J-27; hòa ở dung sai ≥ 0.5 và dòng cấm import flutter/dart:ui).
+- PR `test/E2`: `snap_test.dart` ENG-J-18..29, khóa hash vào
+  tests.lock (eb9d5b5f…). PR `feat/E2-snap` xếp chồng: thêm
+  `Board.snapTarget` (Euclid tới tâm gần nhất, biên bao gồm, hòa chọn
+  row/col nhỏ hơn, thuần túy không đổi trạng thái).
+- Theo cách merge Opus khuyến nghị: không merge PR #12 riêng (CI sẽ
+  đỏ vì contract chưa có test); cả chồng #12 + test/E2 + feat/E2-snap
+  squash một lần vào main khi evaluate E2 xanh.
+
 ## 2026-11-27 — E1 đã merge; mở contract E2 (James)
 
 - PR #11 (feat/E1-board) đã squash merge vào main (commit f0850ae),
