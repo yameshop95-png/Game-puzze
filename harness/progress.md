@@ -30,6 +30,30 @@ phần). Đã sửa trong PR #8:
   đều là James, nên lớp chặn thật là tests.lock + người duyệt độc lập.
 - Sau vòng này PR #8 chuyển từ draft sang ready theo yêu cầu của Opus.
 
+## 2026-11-27 — PR #9 vòng sửa theo Opus review (James)
+
+Opus tái hiện được 5 lỗ trong các cổng của PR #9; đã sửa hết trong PR này:
+
+- **Purity 1 — import có điều kiện:** nay kiểm MỌI URI trong ngoặc kép trên
+  dòng import/export (trước chỉ lấy chuỗi cuối).
+- **Purity 2 — package URI chứa `..`:** `package:game_puzzle/engine/../…`
+  bị chặn (kiểm từng đoạn đường dẫn).
+- **Purity 3 — import tương đối trần:** `import 'piece.dart';` (không ./)
+  được coi là tương đối và kiểm resolve như thường (trước bị chặn oan).
+- **Purity 4 — API cấm:** khớp theo token trọn vẹn, có hay không có ()
+  cũng tính (tear-off `DateTime.now`, `Random.secure`, `Stopwatch` đều
+  bắt); strip comment trước khi quét nên comment nhắc tên API không bị
+  chặn oan; `SeededRandom()` và `Random(seed)` hợp lệ vẫn qua.
+- **Pre-check 5 — ID test:** chỉ tính khi ID xuất hiện dạng `test('<ID>`
+  hoặc `testWidgets('<ID>` trong file `*_test.dart` (comment/.txt không
+  tính). Bổ sung bắt skip dạng `@Skip(`, `markTestSkipped(`, `skip:` kèm
+  lý do (trừ `skip: false`). Bước E* chưa có ánh xạ gói → FAIL rõ ràng
+  thay vì bỏ qua thầm lặng. Ghi chú trong evaluate.sh: CI không chạy
+  script này — cổng pre-check chỉ chạy khi Evaluator chạy tay.
+
+Kiểm chứng: 14 ca probe purity + 9 ca probe pre-check, tất cả đúng kỳ
+vọng (kể cả các ca Opus đã tái hiện).
+
 ## 2026-11-27 — T5+T6: siết evaluate.sh và check_engine_pure.sh (James)
 
 Theo yêu cầu của Opus ở PR #8 (PR riêng, xong trước feat/E1-board):
