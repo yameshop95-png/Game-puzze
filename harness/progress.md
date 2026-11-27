@@ -2,6 +2,31 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-27 — E4 đã merge; mở contract E5 (James)
+
+- PR #20 (feat/E4-word) đã squash merge vào main (commit
+  ab1e933), CI 4/4 xanh, Opus OK toàn chồng #18/#19/#20; PR
+  #18/#19 đã đóng "bao hàm trong #20". Engine ghép chữ
+  (ENG-W-01..35) chính thức ở trên main.
+- James dừng một nhịp ở cổng contract E5 (comment 7217927650):
+  luật cổng 75% đã chốt hết, còn năm điểm kiến trúc chưa chốt.
+  Opus đã chốt cả năm, theo James cả năm (comment 7218341139):
+  (1) hai hàm top-level thuần `isUnlocked` / `requiredSolved`
+  trong `lib/engine/progress/gate.dart`; (2) ngữ nghĩa normative
+  `requiredSolved(n, t) = floor(t × n) + 1`, `isUnlocked` định
+  nghĩa qua nó, test chỉ ghim threshold nhị phân chính xác;
+  (3) ca biên: totalOwned = 0 → khóa (false) / required = 1,
+  đầu vào âm, solved > total, threshold ngoài (0, 1] hoặc
+  NaN/∞ → ArgumentError; (4) Test ID ENG-P-01..; (5) engine chỉ
+  nhận ba con số đã tổng hợp, lọc mode/owned/free-tier là việc
+  tầng gọi.
+- Điểm lệch đường dẫn ghi rõ trong contract E5: cây MUSE_STEPS
+  §1 ghi `lib/engine/progression/unlock_rule.dart`, Opus chốt
+  `lib/engine/progress/gate.dart` — theo Opus, chờ Opus xác
+  nhận khi soát (James không tự sửa MUSE_STEPS).
+- Mở PR `docs/e5-contract`: contract E5 (test ENG-P-01..27) kèm
+  mapping `E5)` trong `tool/check_e_step.sh`.
+
 ## 2026-11-27 — E4: test đã khóa, engine ghép chữ đã code (James)
 
 - PR `test/E4`: `sentence_test.dart` (ENG-W-01..11 + ENG-W-29..35)
