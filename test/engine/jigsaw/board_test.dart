@@ -171,6 +171,12 @@ void main() {
         expect(board.placedCount, 1);
         expect(board.positionOf(0), const CellPos(0, 0));
       }
+      // Moving the already-placed piece 0 out of the grid also fails and
+      // leaves it where it was.
+      expect(() => board.place(0, const CellPos(3, 0)), throwsArgumentError);
+      expect(board.positionOf(0), const CellPos(0, 0));
+      expect(board.pieceAt(const CellPos(0, 0)), 0);
+      expect(board.placedCount, 1);
     });
 
     test('ENG-J-15 pieceAt reports the occupant; own-cell place is a no-op',
@@ -183,6 +189,7 @@ void main() {
       expect(board.placedCount, 1);
       expect(board.correctlyPlacedCount, 1);
       expect(board.positionOf(4), const CellPos(1, 1));
+      expect(board.pieceAt(const CellPos(1, 1)), 4);
     });
   });
 }
