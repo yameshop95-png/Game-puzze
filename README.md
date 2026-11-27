@@ -1,2 +1,2 @@
-# Game-puzze
+# Game-puzzle
 Claude and Muse working toghether 
