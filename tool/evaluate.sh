@@ -2,6 +2,8 @@
 # Evaluator gate runner. Deterministic gates first, in a fixed order.
 # The LLM UX grading step is only reached when every deterministic gate passes.
 # Usage: tool/evaluate.sh [--dry-run] [SPRINT]
+# NOTE: CI does not run this script. The E-step pre-checks below run only
+# when the Evaluator runs evaluate.sh by hand (Opus review of PR #9).
 set -u
 DRY=0
 if [ "${1:-}" = "--dry-run" ]; then DRY=1; shift; fi
@@ -37,8 +39,11 @@ precheck_e() {
   local subdir=""
   case "$SPRINT" in
     E1) subdir="jigsaw" ;;
+    E[0-9]*)
+      echo "FAIL: no engine package mapping for step $SPRINT (add it to precheck_e before running this step)"
+      return 1 ;;
   esac
-  if [ -n "$subdir" ] && [ ! -d "lib/engine/$subdir" ]; then
+  if [ ! -d "lib/engine/$subdir" ]; then
     echo "FAIL: lib/engine/$subdir does not exist"
     return 1
   fi
@@ -46,16 +51,24 @@ precheck_e() {
     echo "FAIL: test/engine does not exist"
     return 1
   fi
-  if grep -rnE "skip:[[:space:]]*(true|'|\")" test/engine >/dev/null 2>&1; then
+  # Skipped tests, in any spelling: skip: <anything but false>, @Skip(...),
+  # markTestSkipped(...).
+  local skip_hits
+  skip_hits=$( { grep -rnE "skip:" test/engine | grep -vE "skip:[[:space:]]*false([^A-Za-z0-9_]|$)" || true
+                 grep -rnE "@Skip\(|markTestSkipped\(" test/engine || true; } )
+  if [ -n "$skip_hits" ]; then
     echo "FAIL: skipped tests found under test/engine:"
-    grep -rnE "skip:" test/engine
+    echo "$skip_hits"
     return 1
   fi
+  # Every contract test ID must appear as an actual test declaration
+  # (test('<ID> or testWidgets('<ID>) inside a *_test.dart file — an ID
+  # mentioned in a comment or a non-test file does not count.
   local ids id
   ids=$(grep -oE "[A-Z]+-[A-Z]-[0-9]+" "$contract" | sort -u)
   for id in $ids; do
-    if ! grep -rq "$id" test/engine; then
-      echo "FAIL: contract test ID $id not found under test/engine"
+    if ! grep -rqE "(test|testWidgets)\('$id" --include='*_test.dart' test/engine; then
+      echo "FAIL: contract test ID $id has no test() declaration in a *_test.dart under test/engine"
       return 1
     fi
   done
