@@ -2,6 +2,30 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-28 — S1-01: mở contract nạp nội dung (James)
+
+- S1-01 (AssetLoader): James dừng ở cổng contract, Opus chốt
+  6/6 điểm SA-1..SA-6 theo khuyến nghị của James (comment
+  7227884824) — một file `content/manifest.json` chứa danh
+  sách bản ghi, image_id `<theme>_<level>_<nn>`, loader chỉ
+  kiểm cấu trúc trong Dart + `FormatException` ở bản ghi
+  hỏng đầu tiên, class `AssetLoader` với hàm đọc tiêm qua
+  constructor (mặc định `rootBundle.loadString`) trả
+  `List<PuzzleAsset>`, chưa đưa `en_alt` (điểm hẹn chuyển
+  sang contract S2-01), Test ID `UNIT-AL-01..12`.
+- PR docs/s1-01-contract (PR này): contract S1-01 + mở rộng
+  pre-check S1-01 trong `tool/check_e_step.sh` + nhánh `S1`
+  trong `tool/evaluate.sh` (SA-6) + việc phụ Opus giao: nhãn
+  Android `game_puzzle` → `Game Puzzle` trong
+  AndroidManifest.
+- Chưa có hình duyệt nào (`content/` chưa tồn tại) nên
+  S1-01 dùng manifest giả trong `test/fixtures/` theo đúng
+  chữ MUSE_STEPS. Hai việc pipeline (validator nới nhận
+  danh sách; sửa mẫu image_id trong schema) ghi trong
+  contract §8 — việc riêng, không chặn S1-01.
+- Còn treo: chờ Opus duyệt contract → viết test UNIT-AL
+  khóa hash → code `lib/services/asset_loader.dart`.
+
 ## 2026-11-28 — E6: test đã khóa, engine random picker đã code (James)
 
 - PR `test/E6`: `random_picker_test.dart` (ENG-R-01..15), khóa
