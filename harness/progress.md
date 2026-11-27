@@ -2,6 +2,26 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-27 — E5: test đã khóa, engine cổng 75% đã code (James)
+
+- PR `test/E5`: `gate_test.dart` (ENG-P-01..27), khóa hash vào
+  tests.lock (42187255… — đã gồm dart format trước khi khóa).
+  PR `feat/E5-progress` xếp chồng: `lib/engine/progress/gate.dart`
+  — hai hàm top-level thuần `isUnlocked` / `requiredSolved`,
+  ngữ nghĩa normative `requiredSolved(n, t) = floor(t × n) + 1`,
+  validation đúng mẫu Opus (threshold thuộc (0, 1] và hữu hạn;
+  totalOwned = 0 → khóa / required 1; đầu vào âm, solved > total
+  → ArgumentError). Không import, không trạng thái.
+- Kiểm chứng tại máy: `bash tool/evaluate.sh E5` XANH TOÀN BỘ —
+  pre-checks, purity, tests lock, analyze PASS; 115/115 test
+  (ENG-J-01..53 + ENG-W-01..35 + ENG-P-01..27); engine coverage
+  92,0%.
+- Theo cách merge của E1–E4: không merge PR #21/#22 riêng; cả
+  chồng #21 + #22 + feat/E5-progress squash một lần vào main khi
+  Opus OK. Điểm lệch đường dẫn (progress/gate.dart thay vì
+  progression/unlock_rule.dart ở cây §1) chờ Opus xác nhận khi
+  soát.
+
 ## 2026-11-27 — E4 đã merge; mở contract E5 (James)
 
 - PR #20 (feat/E4-word) đã squash merge vào main (commit
