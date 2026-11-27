@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  content:
+    name: Content pipeline
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test deps
+        run: pip install pytest jsonschema
+      - name: Pipeline unit tests
+        working-directory: content_pipeline
+        run: python3 -m pytest tests -q
+      - name: Validate content manifest (when present)
+        run: |
+          if [ -f content/manifest.json ]; then
+            python3 content_pipeline/validate_manifest.py content/manifest.json
+          else
+            echo "content/manifest.json not present yet - skipping"
+          fi
+
+  static:
+    name: Static gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Pub get (when a Flutter project exists)
+        run: |
+          if [ -f pubspec.yaml ]; then flutter pub get; else echo "no pubspec.yaml yet - skipping"; fi
+      - name: Analyze (when a Flutter project exists)
+        run: |
+          if [ -f pubspec.yaml ]; then flutter analyze; else echo "no pubspec.yaml yet - skipping"; fi
+      - name: Build debug APK (Phase 0.2 gate - verified here on CI)
+        run: |
+          if [ -f pubspec.yaml ]; then flutter build apk --debug; else echo "no pubspec.yaml yet - skipping"; fi
+      - name: Engine purity
+        run: bash tool/check_engine_pure.sh
+      - name: Tests lock (when locked)
+        run: |
+          if [ -f harness/tests.lock ]; then
+            bash tool/verify_tests_lock.sh
+          else
+            echo "harness/tests.lock not present yet (locks start at Phase E) - skipping"
+          fi
+
+  unit:
+    name: Unit tests + coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Flutter test with coverage (when a Flutter project exists)
+        run: |
+          if [ -f pubspec.yaml ]; then flutter test --coverage; else echo "no pubspec.yaml yet - skipping"; fi
+      - name: Engine coverage >= 80% (when engine exists)
+        run: |
+          if [ -d lib/engine ]; then dart tool/check_coverage.dart; else echo "lib/engine not present yet - skipping"; fi
+
+  android-it:
+    name: Android integration tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run integration tests on emulator (when present)
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86_64
+          script: |
+            if [ -d integration_test ]; then
+              flutter test integration_test
+            else
+              echo "integration_test/ not present yet - skipping"
+            fi
+
+# Maestro E2E flows run locally / on a schedule (see harness/MUSE_STEPS.md 0.5);
+# they are not part of the per-PR CI until a device farm is chosen.
