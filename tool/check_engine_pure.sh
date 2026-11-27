@@ -10,13 +10,13 @@
 #  - Banned APIs, matched as whole tokens with or without "()" so
 #    tear-offs count too: DateTime.now, DateTime.timestamp, Random.secure,
 #    Random.new, Stopwatch, and the unseeded Random()/Random(null)
-#    Comments are stripped before scanning, so a comment merely naming a
-#    banned API does not fail the gate. Seeded Random(seed) and names that
-#    merely contain a banned word (SeededRandom) are allowed.
+#    Comments AND string contents are blanked before scanning
+#    (tool/strip_comments.awk, string-aware), so a comment or a string
+#    literal merely naming a banned API does not fail the gate, and code
+#    after a string on the same line is still scanned. Seeded
+#    Random(seed) and names that merely contain a banned word
+#    (SeededRandom) are allowed.
 #    Inject clock and rng instead (harness/MUSE_STEPS.md, Phase E risks).
-#  Known simplification: comment stripping cuts at the first "//" and
-#  handles /* */ blocks without nesting; string literals containing
-#  "//" or "/*" would be misread. Engine code has no such literals.
 set -u
 if [ ! -d lib/engine ]; then
   echo "check_engine_pure: lib/engine does not exist yet - nothing to check."
@@ -39,6 +39,13 @@ while IFS= read -r dart_file; do
       if ($0 ~ /^[[:space:]]*(import|export|part)([[:space:]]|$)/) {
         start = NR; buf = $0
         if ($0 ~ /;/) { printf "%d\t%s\n", start, buf }
+        else { collecting = 1 }
+      } else if (match($0, /;[[:space:]]*(import|export|part)([[:space:]]|$)/)) {
+        # A directive may share a line with a previous statement
+        # (e.g. "library engine; import ..."): start from the keyword.
+        start = NR; buf = substr($0, RSTART + 1)
+        sub(/^[[:space:]]*/, "", buf)
+        if (buf ~ /;/) { printf "%d\t%s\n", start, buf }
         else { collecting = 1 }
       }
     }' "$dart_file")
@@ -84,30 +91,7 @@ trap 'rm -rf "$tmp"' EXIT
 while IFS= read -r dart_file; do
   rel=${dart_file#lib/engine/}
   mkdir -p "$tmp/$(dirname "$rel")"
-  awk '
-    BEGIN { inblock = 0 }
-    {
-      line = $0; out = ""
-      while (length(line) > 0) {
-        if (inblock) {
-          end = index(line, "*/")
-          if (end == 0) { line = "" }
-          else { line = substr(line, end + 2); inblock = 0 }
-        } else {
-          start = index(line, "/*")
-          slash = index(line, "//")
-          if (slash > 0 && (start == 0 || slash < start)) {
-            out = out substr(line, 1, slash - 1); line = ""
-          } else if (start > 0) {
-            out = out substr(line, 1, start - 1)
-            line = substr(line, start + 2); inblock = 1
-          } else {
-            out = out line; line = ""
-          }
-        }
-      }
-      print out
-    }' "$dart_file" > "$tmp/$rel"
+  awk -v blank_strings=1 -f tool/strip_comments.awk "$dart_file" > "$tmp/$rel"
 done <<EOFF
 $(find lib/engine -name '*.dart' -type f)
 EOFF
