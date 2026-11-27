@@ -1,0 +1,12 @@
+# Changes under these paths need approval from a code owner.
+
+/test/                      @yameshop95-png
+/integration_test/          @yameshop95-png
+/.maestro/                  @yameshop95-png
+/test_driver/               @yameshop95-png
+/harness/tests.lock         @yameshop95-png
+/harness/thresholds.yaml    @yameshop95-png
+/harness/ux_rubric.md       @yameshop95-png
+/config/                    @yameshop95-png
+/content/                   @yameshop95-png
+/content_pipeline/          @yameshop95-png

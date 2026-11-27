@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "deny": [
+      "Edit(test/**)",
+      "Write(test/**)",
+      "Edit(integration_test/**)",
+      "Write(integration_test/**)",
+      "Edit(.maestro/**)",
+      "Write(.maestro/**)",
+      "Edit(test_driver/**)",
+      "Write(test_driver/**)",
+      "Edit(harness/tests.lock)",
+      "Write(harness/tests.lock)",
+      "Edit(harness/thresholds.yaml)",
+      "Write(harness/thresholds.yaml)",
+      "Edit(harness/ux_rubric.md)",
+      "Write(harness/ux_rubric.md)",
+      "Edit(config/**)",
+      "Write(config/**)",
+      "Edit(harness/contracts/**)",
+      "Write(harness/contracts/**)",
+      "Edit(.github/**)",
+      "Write(.github/**)",
+      "Edit(content/**)",
+      "Write(content/**)",
+      "Bash(git push --force*)",
+      "Bash(flutter pub publish*)"
+    ]
+  }
+}
