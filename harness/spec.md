@@ -90,4 +90,4 @@ lớp chặn thật là tests.lock chạy trong CI, không phải lượt duyệ
 merge khi CI đang đỏ.** Paul đã bật "required status checks" cho
 hai job "Static gates" và "Unit tests + coverage" (tên hiển thị của job,
 không phải id `static`/`unit`) trong ruleset "Protect main" ngày
-27/11/2026, nên luật này đã thành chặn cứng; tới lúc đó, luật trên giấy này là cam kết của quy trình.
+27/11/2026, nên luật này đã thành chặn cứng.
