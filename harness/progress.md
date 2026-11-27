@@ -19,9 +19,11 @@
 - Mở PR `docs/e3-contract`: contract E3 (test ENG-J-30..53, ghi kèm
   ID Opus E3-P/C/T — dãy ENG-J giữ nguyên vì cổng check_e_step trích
   ID theo mẫu ENG-J), kèm mapping `E3)` trong `tool/check_e_step.sh`.
-  Một điểm lệch có ghi rõ trong contract §6 chờ Opus xác nhận:
+  Hai điểm lệch có ghi rõ trong contract §6 chờ Opus xác nhận:
   E3-C06 "bàn 1×1" không dựng được vì E1 chốt gridSize ≥ 2, nên
-  ENG-J-42 kiểm ca biên tương đương 2×2.
+  ENG-J-42 kiểm ca biên tương đương 2×2; và E3-C03 "moved hoàn
+  thành bàn" bất khả về mặt toán học theo luật mỗi ô một mảnh của
+  E1, nên ENG-J-39 kiểm biên gần nhất tới được.
 
 ## 2026-11-27 — E2: test đã khóa, engine snap đã code (James)
 
