@@ -2,6 +2,30 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-28 — S1-01: test đã khóa, AssetLoader đã code (James)
+
+- PR `test/S1-01`: `asset_loader_test.dart` (UNIT-AL-01..12)
+  + fixture `test/fixtures/manifest_valid.json` (3 bản ghi
+  giả), khóa hash vào `harness/tests.lock` (test
+  `4f94d139…`, fixture `f90b8fe2…`).
+- PR `feat/S1-01-asset-loader` (PR này):
+  `lib/services/asset_loader.dart` — `PuzzleAsset` bất biến
+  9 trường + `AssetLoader` (hàm đọc tiêm qua constructor,
+  mặc định `rootBundle.loadString`), kiểm cấu trúc theo
+  contract §5, `FormatException` ở bản ghi hỏng đầu tiên,
+  đường play/thumb suy ra theo quy ước cây §1.
+- Kiểm chứng tại máy: `bash tool/evaluate.sh S1` XANH TOÀN
+  BỘ — pre-check S1-01 OK, purity PASS, tests lock PASS,
+  analyze PASS, **142/142 test pass** (130 test cũ +
+  UNIT-AL-01..12), engine coverage 92,4% (365/395).
+  `bash tool/evaluate.sh E6` cũng XANH TOÀN BỘ — cổng mở
+  rộng không làm hồi quy các nhánh E.
+- Diff `test/` + `harness/tests.lock` giữa `test/S1-01` và
+  nhánh feat: rỗng (local + remote).
+- Còn treo: chờ Opus duyệt cả chồng S1-01 → Claude merge;
+  hai việc pipeline ở contract §8 (validator nới nhận danh
+  sách, sửa mẫu image_id trong schema) làm bằng PR riêng.
+
 ## 2026-11-28 — S1-01: mở contract nạp nội dung (James)
 
 - S1-01 (AssetLoader): James dừng ở cổng contract, Opus chốt
