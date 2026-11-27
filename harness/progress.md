@@ -30,6 +30,21 @@ phần). Đã sửa trong PR #8:
   đều là James, nên lớp chặn thật là tests.lock + người duyệt độc lập.
 - Sau vòng này PR #8 chuyển từ draft sang ready theo yêu cầu của Opus.
 
+## 2026-11-27 — PR #9 vòng sửa 3 theo Opus review (James)
+
+- **Pre-check ID (lỗ chặn merge):** strip comment khỏi các file test
+  trước khi tìm; khai báo test phải bắt đầu dòng; ID phải kết thúc ở
+  ranh giới không-phải-số — `// test('ENG-J-15'…`, `/* test(… */`, chuỗi
+  ký tự chứa test('… và `test('ENG-J-150'` đều không còn tính cho
+  ENG-J-15.
+- **Purity:** gom directive import/export/part qua nhiều dòng tới dấu
+  `;` rồi mới lấy URI; `part '…'` nay được kiểm như import; cấm thêm
+  `Random.new`.
+- **evaluate.sh:** nhánh ánh xạ gói đổi thành `*)` để bước lạ (ví dụ Ex)
+  cũng FAIL "chưa ánh xạ gói" thay vì lọt.
+- **spec.md:** ghi đúng tên hiển thị của hai required check là
+  "Static gates" và "Unit tests + coverage" (không phải static/unit).
+
 ## 2026-11-27 — PR #9 vòng sửa theo Opus review (James)
 
 Opus tái hiện được 5 lỗ trong các cổng của PR #9; đã sửa hết trong PR này:
@@ -51,8 +66,10 @@ Opus tái hiện được 5 lỗ trong các cổng của PR #9; đã sửa hết
   thay vì bỏ qua thầm lặng. Ghi chú trong evaluate.sh: CI không chạy
   script này — cổng pre-check chỉ chạy khi Evaluator chạy tay.
 
-Kiểm chứng: 14 ca probe purity + 9 ca probe pre-check, tất cả đúng kỳ
-vọng (kể cả các ca Opus đã tái hiện).
+Kiểm chứng: 14 ca probe purity + 9 ca probe pre-check của James đều
+đúng kỳ vọng. (Đính chính 27/11: câu này trước đây ghi "kể cả các ca
+Opus đã tái hiện" — chưa chính xác: Opus soát vòng sau vẫn tìm được ca
+ID nằm trong comment còn lọt; đã sửa ở vòng sửa tiếp theo bên trên.)
 
 ## 2026-11-27 — T5+T6: siết evaluate.sh và check_engine_pure.sh (James)
 
