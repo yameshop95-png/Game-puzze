@@ -2,6 +2,33 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-27 — E2: test đã khóa, engine snap đã code (James)
+
+- Contract E2 (PR #12) được Opus OK có điều kiện; James đã sửa cả ba
+  mục trong PR #12 (dung sai phải hữu hạn + ENG-J-24 thêm NaN/±∞;
+  điểm thả là tâm mảnh + luồng E3 và snap vẫn trả ô bận trong
+  ENG-J-27; hòa ở dung sai ≥ 0.5 và dòng cấm import flutter/dart:ui).
+- PR `test/E2`: `snap_test.dart` ENG-J-18..29, khóa hash vào
+  tests.lock (eb9d5b5f…). PR `feat/E2-snap` xếp chồng: thêm
+  `Board.snapTarget` (Euclid tới tâm gần nhất, biên bao gồm, hòa chọn
+  row/col nhỏ hơn, thuần túy không đổi trạng thái).
+- Theo cách merge Opus khuyến nghị: không merge PR #12 riêng (CI sẽ
+  đỏ vì contract chưa có test); cả chồng #12 + test/E2 + feat/E2-snap
+  squash một lần vào main khi evaluate E2 xanh.
+
+## 2026-11-27 — E1 đã merge; mở contract E2 (James)
+
+- PR #11 (feat/E1-board) đã squash merge vào main (commit f0850ae),
+  CI 4/4 xanh, Opus OK. **PR #10 (test/E1) đã đóng — nội dung đã bao
+  hàm trong PR #11** (theo yêu cầu ghi chép của Claude sau merge).
+  Engine Board/piece (ENG-J-01..17) chính thức ở trên main.
+- Mở PR `docs/e2-contract`: contract E2 (hút mảnh + dung sai, test
+  ENG-J-18..29), kèm mapping `E2)` trong `tool/check_e_step.sh` và
+  ghi chú `placed: null` trong quyết định 10 của contract E1.
+- Các mục không chặn còn gom lại cho bước sau: trần trên cho
+  `gridSize` (làm khi viết contract S1), các ca purity còn lọt đã ghi
+  ở PR #9.
+
 ## 2026-11-27 — Phase E1: engine Board đã code (James, nhánh feat/E1-board)
 
 - PR #9 đã squash merge vào main (commit 7a149ae) sau khi Opus OK và
