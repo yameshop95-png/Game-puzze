@@ -1,0 +1,56 @@
+# Progress — nhật ký harness
+
+Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
+
+## 2026-11-27 — Giai đoạn 0 (James, trong Muse) — nhánh chore/phase-0-repo-ci
+
+- **0.1 XONG.** `git mv` toàn bộ pipeline vào `content_pipeline/`
+  (validate_manifest.py, manifest.schema.json, CONTENT_PIPELINE.md, tests/).
+  Kiểm chứng: `python3 -m pytest tests -q` trong content_pipeline → **25 passed**.
+- **0.2 XONG (trừ build APK tại máy James — xem mục Treo).**
+  `flutter create --org com.paperfox --platforms android,ios --project-name game_puzze`
+  trên Flutter 3.38.1 (ghim trong .fvmrc). applicationId `com.paperfox.game_puzze`
+  (org do Paul chốt: Paperfox — tên studio trung tính, vì org là công khai trên
+  trang Play và không đổi được sau phát hành). README.md không bị đụng (diff rỗng).
+  Kiểm chứng: `flutter analyze` → **No issues found**; `flutter test` → **passed**.
+- **0.3 XONG.** analysis_options.yaml: flutter_lints + strict-casts/inference/raw-types.
+  Package: drift ^2.35.4, drift_flutter ^0.3.1, purchases_flutter ^11.0.6;
+  dev: build_runner ^2.15.1, integration_test (SDK).
+  **drift_dev hoãn có ghi lý do:** mọi bản drift_dev đi cặp với drift ≥ 2.34 đều đòi
+  analyzer ^13, mà Flutter SDK 3.38.1 đã ghim không giải quyết được (solver fail cả
+  ở cặp 2.34.5). Xét lại ở S1-02 khi cần sinh code lần đầu.
+  Kiểm chứng sau khi thêm package: pub get OK, analyze sạch, test pass.
+- **0.4 XONG.** tool/check_engine_pure.sh, tool/verify_tests_lock.sh,
+  tool/check_coverage.dart, tool/evaluate.sh. evaluate.sh --dry-run in đúng thứ tự
+  cổng: validator nội dung → engine purity → tests lock → analyze → test+coverage →
+  coverage engine → integration test → (chỉ khi tất định pass) LLM chấm UX.
+  verify_tests_lock và check_coverage **fail đúng mong đợi** ở giai đoạn này
+  (chưa có tests.lock, chưa có lib/engine) — khóa test bắt đầu từ Giai đoạn E.
+- **0.5 XONG.** .github/workflows/ci.yml: 4 job content / static / unit / android-it
+  (emulator API 30 x86_64). Job static có bước **build APK debug** — chính là cổng
+  kiểm chứng của 0.2 chạy trên CI. Các bước phụ thuộc Flutter/engine/tests.lock được
+  bỏ qua có điều kiện cho tới khi phần tương ứng tồn tại. Maestro chạy local/theo lịch.
+- **0.6 XONG.** harness/spec.md, thresholds.yaml (pass 8, tối đa 3 vòng FAIL,
+  cùng lỗi 2 lần thì dừng, trần chi phí $300, cảnh báo ở $240), ux_rubric.md
+  (4 mục, mô tả 4/6/8/10), progress.md, cost_ledger.csv.
+- **0.7 PHẦN NGƯỜI.** .github/CODEOWNERS và .claude/settings.json đã có trên main
+  (Paul/Claude kích hoạt qua PR #4–#6). James đã review bản nháp ở issue #2:
+  CODEOWNERS chỉ để @yameshop95-png (James không có login GitHub riêng).
+  Việc còn lại của Paul: bật branch protection yêu cầu code-owner review.
+
+### Treo / giới hạn môi trường (minh bạch)
+
+- **`flutter build apk --debug` chưa chạy được trên VM của James.** Đã truy tận gốc:
+  (1) Java không qua được proxy egress của sandbox ở bước CONNECT (sdkmanager và
+  Gradle wrapper cùng lỗi) — đã vòng bằng cách tải tay SDK/Gradle bằng curl và
+  nạp chứng thư CA của proxy vào JDK; (2) sau đó Gradle vẫn fail "Could not receive
+  a message from the daemon" — lớp giao tiếp tiến trình con (daemon) của Gradle/
+  Kotlin không hoạt động trên VM này (gradle --version chạy, mọi build đều fail
+  trong vài giây, kể cả --no-daemon vì Gradle 8 vẫn fork tiến trình con).
+  Đây là giới hạn của môi trường James, **không phải lỗi của project**: bộ khung là
+  template chuẩn của Flutter 3.38.1. Cổng này được kiểm chứng thay bằng bước
+  build APK trong CI của chính PR này; Paul/Claude cũng build được trên máy thật.
+- Vì proxy trên: hook native-assets của package sqlite3 (theo drift_flutter) không
+  tự tải được libsqlite3 cho máy host — James đã nạp tay file .so chính hãng vào
+  cache của hook để `flutter test` chạy. Trên máy thường và CI không cần bước này.
+- iOS: chưa kiểm chứng build iOS (cần macOS — máy của Paul/Claude ở các mốc sau).
