@@ -30,6 +30,21 @@ phần). Đã sửa trong PR #8:
   đều là James, nên lớp chặn thật là tests.lock + người duyệt độc lập.
 - Sau vòng này PR #8 chuyển từ draft sang ready theo yêu cầu của Opus.
 
+## 2026-11-27 — PR #9 vòng sửa 5 theo Opus soát lại (James)
+
+- **Bắt buộc:** nội suy chuỗi `${...}` là code thật — strip_comments.awk
+  nay chuyển sang trạng thái code trong `${...}` (đếm độ sâu ngoặc, hỗ
+  trợ chuỗi lồng nhau) nên `'${DateTime.now()}'` không còn lọt cổng
+  purity. Viết lại strip_comments.awk thành máy trạng thái có ngăn xếp
+  ngữ cảnh.
+- Raw string (`r'...'`) được nhận diện đúng: không escape, không nội
+  suy — hết ca `r'C:\'` nuốt mất dấu đóng chuỗi.
+- check_e_step: mirror làm trắng nội dung chuỗi ba nháy (khai báo test
+  nằm trong `'''...'''` không còn được tính); regex skip nhận cả
+  `skip : true` có dấu cách.
+- CI: bước E-step pre-checks FAIL khi test/engine tồn tại mà không có
+  contract `E*.md` nào.
+
 ## 2026-11-27 — PR #9 vòng sửa 4 theo code-review của Claude (James)
 
 - **Chặn merge (mục 1):** cổng pre-check tách thành script riêng
