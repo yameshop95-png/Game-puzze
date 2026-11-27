@@ -1,0 +1,2 @@
+date,phase,actor,description,usd_estimate,notes
+2026-11-27,0.1,James,"Move content pipeline into content_pipeline/; pytest 25 passed",0,"Runs inside Muse on Paul's subscription - no per-token cash cost; USD column tracks the API-equivalent for the cap in thresholds.yaml"
