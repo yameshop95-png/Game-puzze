@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 # Gate: lib/engine must stay pure Dart.
 # Rules (tightened for Phase E; round 2 per the Opus review of PR #9):
-#  - Imports/exports: EVERY quoted URI on the line is checked (conditional
-#    imports included). Allowed: dart:core, dart:math, dart:collection,
+#  - Imports/exports/parts: EVERY quoted URI of each directive is checked
+#    (conditional imports included; directives are joined across lines up
+#    to ";"). Allowed: dart:core, dart:math, dart:collection,
 #    dart:convert; package:game_puzzle/engine/** with no ".." segment;
 #    relative URIs (./x, ../x, or bare "piece.dart") that resolve to a
 #    target INSIDE lib/engine.
 #  - Banned APIs, matched as whole tokens with or without "()" so
 #    tear-offs count too: DateTime.now, DateTime.timestamp, Random.secure,
-#    Stopwatch, and the unseeded Random()/Random(null) constructor.
+#    Random.new, Stopwatch, and the unseeded Random()/Random(null)
 #    Comments are stripped before scanning, so a comment merely naming a
 #    banned API does not fail the gate. Seeded Random(seed) and names that
 #    merely contain a banned word (SeededRandom) are allowed.
@@ -24,13 +25,25 @@ fi
 fail=0
 engine_root=$(realpath -m lib/engine)
 
-# ---- Import / export URIs -------------------------------------------------
+# ---- Import / export / part URIs -------------------------------------------
+# Directives may span several lines, so each directive is first joined up
+# to its terminating ";" (line number of its first line is kept).
 while IFS= read -r dart_file; do
-  directives=$(grep -nE "^[[:space:]]*(import|export)[[:space:]]+" "$dart_file" || true)
+  directives=$(awk '
+    {
+      if (collecting) {
+        buf = buf " " $0
+        if ($0 ~ /;/) { printf "%d\t%s\n", start, buf; collecting = 0 }
+        next
+      }
+      if ($0 ~ /^[[:space:]]*(import|export|part)([[:space:]]|$)/) {
+        start = NR; buf = $0
+        if ($0 ~ /;/) { printf "%d\t%s\n", start, buf }
+        else { collecting = 1 }
+      }
+    }' "$dart_file")
   [ -z "$directives" ] && continue
-  while IFS= read -r entry; do
-    lineno=${entry%%:*}
-    line=${entry#*:}
+  while IFS=$'\t' read -r lineno line; do
     uris=$(printf '%s' "$line" | grep -oE "'[^']+'|\"[^\"]+\"" | tr -d "'\"" || true)
     [ -z "$uris" ] && continue
     while IFS= read -r uri; do
@@ -99,10 +112,10 @@ done <<EOFF
 $(find lib/engine -name '*.dart' -type f)
 EOFF
 
-banned='(^|[^A-Za-z0-9_])(DateTime\.now|DateTime\.timestamp|Random\.secure|Stopwatch)([^A-Za-z0-9_]|$)|(^|[^A-Za-z0-9_])Random[[:space:]]*\([[:space:]]*(null)?[[:space:]]*\)'
+banned='(^|[^A-Za-z0-9_])(DateTime\.now|DateTime\.timestamp|Random\.secure|Random\.new|Stopwatch)([^A-Za-z0-9_]|$)|(^|[^A-Za-z0-9_])Random[[:space:]]*\([[:space:]]*(null)?[[:space:]]*\)'
 hits=$(grep -rnE "$banned" "$tmp" || true)
 if [ -n "$hits" ]; then
-  echo "FAIL: banned APIs in lib/engine (DateTime.now/timestamp, Random.secure, unseeded Random, Stopwatch):"
+  echo "FAIL: banned APIs in lib/engine (DateTime.now/timestamp, Random.secure, Random.new, unseeded Random, Stopwatch):"
   printf '%s\n' "$hits" | sed "s|$tmp/|lib/engine/|"
   fail=1
 fi
