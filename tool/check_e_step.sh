@@ -38,24 +38,25 @@ if [ ! -d test/engine ]; then
   echo "FAIL: test/engine does not exist"
   exit 1
 fi
-# Skipped tests, in any spelling: skip: <anything but false>, @Skip(...),
-# markTestSkipped(...).
-skip_hits=$( { grep -rnE "skip:" test/engine | grep -vE "skip:[[:space:]]*false([^A-Za-z0-9_]|$)" || true
+# Skipped tests, in any spelling: skip <spaces>: <anything but false>,
+# @Skip(...), markTestSkipped(...).
+skip_hits=$( { grep -rnE "skip[[:space:]]*:" test/engine | grep -vE "skip[[:space:]]*:[[:space:]]*false([^A-Za-z0-9_]|$)" || true
                grep -rnE "@Skip\(|markTestSkipped\(" test/engine || true; } )
 if [ -n "$skip_hits" ]; then
   echo "FAIL: skipped tests found under test/engine:"
   echo "$skip_hits"
   exit 1
 fi
-# Mirror the test files with comments stripped (strings kept — the test
-# ID lives inside a string), then join a line that ends with test( or
+# Mirror the test files with comments stripped and triple-quoted
+# string contents blanked (single-line strings kept — the test ID
+# lives inside one), then join a line that ends with test( or
 # testWidgets( onto the next line so a wrapped declaration still counts.
 mirror=$(mktemp -d)
 trap 'rm -rf "$mirror"' EXIT
 while IFS= read -r f; do
   rel=${f#test/engine/}
   mkdir -p "$mirror/$(dirname "$rel")"
-  awk -f tool/strip_comments.awk "$f" | awk '
+  awk -v blank_triple=1 -f tool/strip_comments.awk "$f" | awk '
     {
       if (hold != "") { $0 = hold $0; hold = "" }
       if ($0 ~ /(^|[^A-Za-z0-9_])(test|testWidgets)\([[:space:]]*$/) { hold = $0; next }
