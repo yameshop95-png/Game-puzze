@@ -51,6 +51,19 @@ jobs:
           if [ -f pubspec.yaml ]; then flutter build apk --debug; else echo "no pubspec.yaml yet - skipping"; fi
       - name: Engine purity
         run: bash tool/check_engine_pure.sh
+      - name: gateThreshold single source (thresholds.yaml == game_config.json)
+        run: |
+          if [ -f config/game_config.json ]; then
+            cfg=$(python3 -c "import json; print(json.load(open('config/game_config.json'))['gateThreshold'])")
+            thr=$(grep -E '^gate_threshold:' harness/thresholds.yaml | awk '{print $2}')
+            if [ "$cfg" != "$thr" ]; then
+              echo "FAIL: gateThreshold mismatch: config=$cfg thresholds.yaml=$thr"
+              exit 1
+            fi
+            echo "gateThreshold consistent: $cfg"
+          else
+            echo "config/game_config.json not present yet - skipping"
+          fi
       - name: Tests lock (Phase E - fail if engine/tests exist without a lock)
         run: |
           if [ -f harness/tests.lock ]; then
@@ -82,6 +95,9 @@ jobs:
               exit 1
             fi
             dart tool/check_coverage.dart
+          elif [ -d test/engine ]; then
+            echo "FAIL: test/engine exists but lib/engine is missing"
+            exit 1
           else
             echo "lib/engine not present yet - skipping"
           fi
