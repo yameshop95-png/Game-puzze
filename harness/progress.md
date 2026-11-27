@@ -33,10 +33,18 @@
 - **0.6 XONG.** harness/spec.md, thresholds.yaml (pass 8, tối đa 3 vòng FAIL,
   cùng lỗi 2 lần thì dừng, trần chi phí $300, cảnh báo ở $240), ux_rubric.md
   (4 mục, mô tả 4/6/8/10), progress.md, cost_ledger.csv.
-- **0.7 PHẦN NGƯỜI.** .github/CODEOWNERS và .claude/settings.json đã có trên main
-  (Paul/Claude kích hoạt qua PR #4–#6). James đã review bản nháp ở issue #2:
-  CODEOWNERS chỉ để @yameshop95-png (James không có login GitHub riêng).
-  Việc còn lại của Paul: bật branch protection yêu cầu code-owner review.
+- **0.7 PHẦN NGƯỜI.** .github/CODEOWNERS và .claude/settings.json lên main qua
+  PR #3 (nhánh claude/eloquent-keller-gow6de); PR #4 và #5 là PR thử
+  CODEOWNERS/ruleset (đã merge), PR #6 dọn các file thử đó. James đã review
+  bản nháp ở issue #2: CODEOWNERS chỉ để @yameshop95-png (James không có login
+  GitHub riêng). Ruleset "Protect main" ĐÃ bật sẵn, có bypass cho chủ repo
+  (ghi nhận theo review của Claude trên issue #2 ngày 27/11, khớp lịch sử
+  main). Cấu trúc cần nhớ: CODEOWNERS chỉ có một tài khoản và GitHub không
+  cho tác giả tự duyệt PR của mình, nên merge thực tế đi qua bypass của chủ
+  repo — lớp chặn thật là tests.lock chạy trong CI (đã ghi vào spec).
+  drift_dev hoãn là CÓ CHỦ ĐÍCH (xem 0.3); **James chốt hướng xử lý trước
+  S1-02**: nâng Flutter lên bản mới hơn, hoặc hạ drift về cặp phiên bản giải
+  được cùng analyzer.
 
 ### Treo / giới hạn môi trường (minh bạch)
 
