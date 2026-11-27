@@ -24,9 +24,9 @@ class CellPos {
 /// `row * N + col` (0..N²-1): stable, deterministic, never random.
 class Board {
   Board._(int gridSize)
-      : _gridSize = gridSize,
-        _cells = List<int?>.filled(gridSize * gridSize, null),
-        _positions = List<CellPos?>.filled(gridSize * gridSize, null);
+    : _gridSize = gridSize,
+      _cells = List<int?>.filled(gridSize * gridSize, null),
+      _positions = List<CellPos?>.filled(gridSize * gridSize, null);
 
   /// Creates an N×N board with every piece in the tray.
   /// Throws [ArgumentError] if [gridSize] < 2.
@@ -58,8 +58,15 @@ class Board {
     for (final entry in placedValue.entries) {
       final key = entry.key;
       final id = key is String ? int.tryParse(key) : null;
-      if (id == null) {
-        throw ArgumentError.value(key, 'placed key', 'must be a piece id');
+      // Only the canonical decimal form is accepted: "01", " 1" and
+      // "+1" parse as 1 but are not keys toMap() would ever write, and
+      // accepting them could silently move a piece.
+      if (id == null || '$id' != key) {
+        throw ArgumentError.value(
+          key,
+          'placed key',
+          'must be a piece id in canonical form',
+        );
       }
       final value = entry.value;
       if (value is! List ||
@@ -67,12 +74,18 @@ class Board {
           value[0] is! int ||
           value[1] is! int) {
         throw ArgumentError.value(
-            value, 'placed[$key]', 'must be a [row, col] pair of ints');
+          value,
+          'placed[$key]',
+          'must be a [row, col] pair of ints',
+        );
       }
       final pos = CellPos(value[0] as int, value[1] as int);
       if (!seenCells.add(pos)) {
         throw ArgumentError.value(
-            pos, 'placed[$key]', 'two pieces in the same cell');
+          pos,
+          'placed[$key]',
+          'two pieces in the same cell',
+        );
       }
       // place() validates the id range and the cell bounds.
       board.place(id, pos);
@@ -101,7 +114,10 @@ class Board {
   }
 
   void _checkCell(CellPos pos) {
-    if (pos.row < 0 || pos.row >= _gridSize || pos.col < 0 || pos.col >= _gridSize) {
+    if (pos.row < 0 ||
+        pos.row >= _gridSize ||
+        pos.col < 0 ||
+        pos.col >= _gridSize) {
       throw ArgumentError.value(pos, 'pos', 'cell outside the grid');
     }
   }

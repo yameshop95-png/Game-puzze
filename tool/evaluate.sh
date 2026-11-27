@@ -2,6 +2,8 @@
 # Evaluator gate runner. Deterministic gates first, in a fixed order.
 # The LLM UX grading step is only reached when every deterministic gate passes.
 # Usage: tool/evaluate.sh [--dry-run] [SPRINT]
+# NOTE: CI does not run this script, but the E-step pre-checks live in
+# tool/check_e_step.sh, which CI does run (Static gates job).
 set -u
 DRY=0
 if [ "${1:-}" = "--dry-run" ]; then DRY=1; shift; fi
@@ -23,6 +25,16 @@ gate() {
 }
 
 echo "Evaluating sprint: $SPRINT"
+
+# Phase E pre-checks (T5, Opus review of PR #8) live in their own script,
+# tool/check_e_step.sh, so CI runs them too (code-review of PR #9: a gate
+# that only runs by hand is not a gate). evaluate.sh just calls it.
+precheck_e() {
+  bash tool/check_e_step.sh "$SPRINT"
+}
+case "$SPRINT" in
+  E*) gate "E-step pre-checks" precheck_e ;;
+esac
 if [ -f content/manifest.json ]; then
   gate "content validator" python3 content_pipeline/validate_manifest.py content/manifest.json
 else

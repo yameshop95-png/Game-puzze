@@ -181,18 +181,20 @@ void main() {
       expect(board.placedCount, 1);
     });
 
-    test('ENG-J-15 pieceAt reports the occupant; own-cell place is a no-op',
-        () {
-      final board = Board.square(3);
-      expect(board.pieceAt(const CellPos(1, 1)), isNull);
-      board.place(4, const CellPos(1, 1));
-      expect(board.pieceAt(const CellPos(1, 1)), 4);
-      expect(() => board.place(4, const CellPos(1, 1)), returnsNormally);
-      expect(board.placedCount, 1);
-      expect(board.correctlyPlacedCount, 1);
-      expect(board.positionOf(4), const CellPos(1, 1));
-      expect(board.pieceAt(const CellPos(1, 1)), 4);
-    });
+    test(
+      'ENG-J-15 pieceAt reports the occupant; own-cell place is a no-op',
+      () {
+        final board = Board.square(3);
+        expect(board.pieceAt(const CellPos(1, 1)), isNull);
+        board.place(4, const CellPos(1, 1));
+        expect(board.pieceAt(const CellPos(1, 1)), 4);
+        expect(() => board.place(4, const CellPos(1, 1)), returnsNormally);
+        expect(board.placedCount, 1);
+        expect(board.correctlyPlacedCount, 1);
+        expect(board.positionOf(4), const CellPos(1, 1));
+        expect(board.pieceAt(const CellPos(1, 1)), 4);
+      },
+    );
 
     test('ENG-J-16 invariants hold under a seeded operation sequence', () {
       final board = Board.square(4);
@@ -206,8 +208,11 @@ void main() {
             final occupant = board.pieceAt(CellPos(r, c));
             if (occupant != null) {
               occupied++;
-              expect(seen.add(occupant), isTrue,
-                  reason: 'piece $occupant occupies two cells');
+              expect(
+                seen.add(occupant),
+                isTrue,
+                reason: 'piece $occupant occupies two cells',
+              );
               expect(board.positionOf(occupant), CellPos(r, c));
               if (board.homeOf(occupant) == CellPos(r, c)) homeCount++;
             }
@@ -216,7 +221,9 @@ void main() {
         expect(board.placedCount, occupied);
         expect(board.correctlyPlacedCount, homeCount);
         expect(
-            board.correctlyPlacedCount, lessThanOrEqualTo(board.placedCount));
+          board.correctlyPlacedCount,
+          lessThanOrEqualTo(board.placedCount),
+        );
         for (var id = 0; id < 16; id++) {
           expect(board.isPlaced(id), seen.contains(id));
         }

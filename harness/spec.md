@@ -86,3 +86,8 @@ Ghi chú quản trị repo: ruleset "Protect main" đã bật sẵn (có bypass 
 repo). CODEOWNERS chỉ có một tài khoản (@yameshop95-png) và GitHub không cho
 tác giả tự duyệt PR của mình, nên merge thực tế đi qua bypass của chủ repo —
 lớp chặn thật là tests.lock chạy trong CI, không phải lượt duyệt.
+**Luật merge (Opus nêu khi merge PR #8, 27/11/2026): không dùng bypass để
+merge khi CI đang đỏ.** Paul đã bật "required status checks" cho
+hai job "Static gates" và "Unit tests + coverage" (tên hiển thị của job,
+không phải id `static`/`unit`) trong ruleset "Protect main" ngày
+27/11/2026, nên luật này đã thành chặn cứng.
