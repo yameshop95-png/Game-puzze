@@ -93,24 +93,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
           flutter-version: "3.38.1"
-      - name: Pub get (when a Flutter project exists)
+      - name: Flutter test with coverage (when a Flutter project exists)
         run: |
-          if [ -f pubspec.yaml ]; then flutter pub get; else echo "no pubspec.yaml yet - skipping"; fi
-      - name: Unit tests + coverage (only when engine tests exist)
+          if [ -f pubspec.yaml ]; then flutter test --coverage; else echo "no pubspec.yaml yet - skipping"; fi
+      - name: Engine coverage >= 80% (required when engine exists)
         run: |
-          if [ -d test/engine ]; then
-            flutter test test/engine --coverage
-            ls coverage/lcov.info
+          if [ -d lib/engine ]; then
+            if [ ! -f coverage/lcov.info ]; then
+              echo "FAIL: lib/engine exists but coverage/lcov.info is missing"
+              exit 1
+            fi
+            dart tool/check_coverage.dart
+          elif [ -d test/engine ]; then
+            echo "FAIL: test/engine exists but lib/engine is missing"
+            exit 1
           else
-            echo "test/engine not present yet - skipping"
+            echo "lib/engine not present yet - skipping"
           fi
 
   android-it:
@@ -118,22 +120,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          flutter-version: "3.38.1"
-      - name: Check integration tests exist
+      - name: Check for integration tests
         id: itcheck
         run: |
-          if [ -d integration_test ] && [ "$(find integration_test -name '*_test.dart' | head -n 1)" != "" ]; then
+          if [ -d integration_test ]; then
             echo "present=true" >> "$GITHUB_OUTPUT"
           else
             echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "integration_test/ not present yet - emulator step skipped"
           fi
+      - uses: subosito/flutter-action@v2
+        if: steps.itcheck.outputs.present == 'true'
+        with:
+          channel: stable
+          flutter-version: "3.38.1"
       - name: Run integration tests on emulator
         if: steps.itcheck.outputs.present == 'true'
         uses: reactivecircus/android-emulator-runner@v2
