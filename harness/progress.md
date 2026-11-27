@@ -2,6 +2,27 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-27 — E2 đã merge; mở contract E3 (James)
+
+- PR #14 (feat/E2-snap) đã squash merge vào main (commit a7b1ec),
+  CI 4/4 xanh, Opus OK toàn chồng #12/#13/#14; PR #12/#13 đã đóng
+  "bao hàm trong #14". Engine snapTarget (ENG-J-18..29) chính thức
+  ở trên main.
+- James dừng một nhịp ở cổng contract E3 (comment 7216515521):
+  MUSE_STEPS §E3 chỉ có hai dòng, ba quyết định kiến trúc chưa chốt.
+  Opus đã chốt cả ba (comment 7216649316): (1) ô bận → từ chối
+  `rejectedOccupied` kèm occupantId, luật phụ moved/noop; (2)
+  PlacePiece là class lệnh bất biến trong commands.dart, đồng bộ,
+  justCompleted tính trong apply, fromMap không phát sự kiện;
+  (3) TrayOrder giữ hoán vị cố định của mọi id, lưu ghi hoán vị
+  không ghi seed, số Semantics = indexOf + 1.
+- Mở PR `docs/e3-contract`: contract E3 (test ENG-J-30..53, ghi kèm
+  ID Opus E3-P/C/T — dãy ENG-J giữ nguyên vì cổng check_e_step trích
+  ID theo mẫu ENG-J), kèm mapping `E3)` trong `tool/check_e_step.sh`.
+  Một điểm lệch có ghi rõ trong contract §6 chờ Opus xác nhận:
+  E3-C06 "bàn 1×1" không dựng được vì E1 chốt gridSize ≥ 2, nên
+  ENG-J-42 kiểm ca biên tương đương 2×2.
+
 ## 2026-11-27 — E2: test đã khóa, engine snap đã code (James)
 
 - Contract E2 (PR #12) được Opus OK có điều kiện; James đã sửa cả ba
