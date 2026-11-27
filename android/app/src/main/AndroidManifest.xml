@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="game_puzze"
+        android:label="game_puzzle"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
