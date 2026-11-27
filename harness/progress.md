@@ -2,6 +2,24 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-27 — Giai đoạn E bắt đầu: contract E1 (James) — nhánh docs/e1-contract
+
+- Viết `harness/contracts/E1.md` theo MUSE_STEPS §E1: mô hình Board/piece
+  thuần Dart (lưới N×N từ config, id mảnh = chỉ số ô nhà, trạng thái
+  đặt/chưa đặt), 13 test ENG-J-01..13, cổng nghiệm thu qua evaluate.sh.
+  Chưa viết code engine, chưa viết test (test khóa hash qua PR test/E1 sau).
+- Đề xuất `config/game_config.json`: gridSizes [3,4,6],
+  snapToleranceRatio 0.2, gateThreshold 0.75, freePuzzlesPerTheme 2, và
+  randomNoRepeatWindow 10 (K chưa chốt ở MUSE_STEPS — chờ Opus/Paul duyệt).
+- Siết `tool/check_engine_pure.sh` theo yêu cầu review của Opus: danh sách
+  import cho phép (chặn dart:ui, dart:io, package:flutter*, import ngoài
+  lib/engine) + cấm DateTime.now() và Random() không seed. Đã kiểm chứng
+  3 trường hợp: chưa có lib/engine → bỏ qua; file xấu → FAIL đúng dòng;
+  file sạch → OK.
+- Sửa câu về README ở mục 0.2 theo ghi nhận của Claude khi merge PR #7.
+- Theo quy trình Paul chốt 27/11: PR này đăng lên issue #2, Claude/Opus
+  kiểm tra, OK thì Claude tự merge.
+
 ## 2026-11-27 — Đổi tên puzze → puzzle (Paul chốt sau review PR #7)
 
 "puzze" là lỗi chính tả — đổi toàn bộ sang **puzzle**: project `game_puzzle`,
@@ -19,7 +37,7 @@ link cũ tự chuyển hướng). flutter analyze sạch sau khi đổi.
   `flutter create --org com.paperfox --platforms android,ios --project-name game_puzzle`
   trên Flutter 3.38.1 (ghim trong .fvmrc). applicationId `com.paperfox.game_puzzle`
   (org do Paul chốt: Paperfox — tên studio trung tính, vì org là công khai trên
-  trang Play và không đổi được sau phát hành). README.md không bị đụng (diff rỗng).
+  trang Play và không đổi được sau phát hành). README.md không bị flutter create đụng vào (diff rỗng tại thời điểm 0.2); tiêu đề của nó được đổi thành "Game-puzzle" ở commit đổi tên ngày 27/11/2026.
   Kiểm chứng: `flutter analyze` → **No issues found**; `flutter test` → **passed**.
 - **0.3 XONG.** analysis_options.yaml: flutter_lints + strict-casts/inference/raw-types.
   Package: drift ^2.35.4, drift_flutter ^0.3.1, purchases_flutter ^11.0.6;
