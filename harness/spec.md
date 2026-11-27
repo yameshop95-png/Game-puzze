@@ -1,6 +1,6 @@
 # Spec — Game xếp hình 5 chủ đề (Planner)
 
-Bản rút gọn có thẩm quyền của kế hoạch tổng hợp (Game-puzze issue #1; bản đầy đủ:
+Bản rút gọn có thẩm quyền của kế hoạch tổng hợp (Game-puzzle issue #1; bản đầy đủ:
 `ke-hoach-game-xep-hinh-dong-vat-2026-11-27.md` trong workspace của Paul).
 Khi có mâu thuẫn, thứ tự ưu tiên: quyết định của Paul > issue #1/#2 > file này.
 
