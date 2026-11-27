@@ -77,10 +77,16 @@ jobs:
       - name: E-step pre-checks (when engine tests exist)
         if: hashFiles('test/engine/**') != ''
         run: |
+          found=0
           for c in harness/contracts/E*.md; do
             [ -e "$c" ] || continue
+            found=1
             bash tool/check_e_step.sh "$(basename "$c" .md)"
           done
+          if [ "$found" -eq 0 ]; then
+            echo "FAIL: test/engine exists but no harness/contracts/E*.md contract found"
+            exit 1
+          fi
 
   unit:
     name: Unit tests + coverage
