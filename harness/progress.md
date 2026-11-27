@@ -2,6 +2,29 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-27 — E3 đã merge; mở contract E4 (James)
+
+- PR #17 (feat/E3-place-piece) đã squash merge vào main (commit
+  aca0e21), CI 4/4 xanh, Opus APPROVED toàn chồng #15/#16/#17 và
+  chấp nhận hai điểm lệch đã ghi trong contract E3 §6; PR #15/#16
+  đã đóng "bao hàm trong #17". Engine PlacePiece + TrayOrder
+  (ENG-J-30..53) chính thức ở trên main.
+- James dừng một nhịp ở cổng contract E4 (comment 7217272660):
+  MUSE_STEPS §E4 chỉ có hai dòng, năm quyết định kiến trúc chưa
+  chốt. Opus đã chốt cả năm (comment 7217451924): (1) token = TỪ,
+  dấu câu dính, mảnh chỉ-dấu-câu gộp vào token trước/sau, giữ
+  Sentence.fromTokens cho cụm; (2) đáp án do caller cấp dạng
+  List<String>, câu gốc là đáp án số 0, schema en_alt để S1;
+  (3) so sánh theo khóa chuẩn hóa (bỏ dấu hai đầu + toLowerCase,
+  giữ dấu giữa từ), validator kiểm multiset ngay khi tạo;
+  (4) scramble Fisher–Yates bắt buộc không trùng đáp án, tối đa
+  maxAttempts trên cùng Random, canScramble == false thì trả lần
+  xáo cuối; (5) Test ID ENG-W-01.. — James đã kiểm regex hai cổng
+  trước khi viết: check_e_step trích ID bằng mẫu tổng quát,
+  verify_tests_lock không có regex ID, nên không cần mở regex.
+- Mở PR `docs/e4-contract`: contract E4 (test ENG-W-01..35) kèm
+  mapping `E4)` trong `tool/check_e_step.sh`.
+
 ## 2026-11-27 — E3: test đã khóa, engine PlacePiece + TrayOrder đã code (James)
 
 - PR `test/E3`: `place_piece_test.dart` (ENG-J-30..43 + ENG-J-53)
