@@ -2,6 +2,55 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-28 — S1-04: test đã khóa, màn chơi đã code (James)
+
+- PR `test/S1-04`: `jigsaw_play_test.dart`
+  (WID-JP-01..12, hash `4928558f…`),
+  `integration_test/jigsaw_snap_test.dart`
+  (IT-J-01..04, `33bf0cd4…`) +
+  `completion_event_test.dart` (IT-J-05..06,
+  `59601599…`), `board_test.dart` thêm ENG-J-54
+  (`d5c216aa…`) — tất cả khóa vào
+  `harness/tests.lock`. Ảnh test sinh tất định bằng
+  PictureRecorder + MemoryImage, không PNG fixture.
+- Nhánh `feat/S1-04-jigsaw-play`:
+  `lib/features/jigsaw_play/` (một `Listener` toàn
+  bảng + máy trạng thái kéo: long-press từ khay,
+  kéo trực tiếp trong bảng, pointer thứ hai bị bỏ
+  qua; `JigsawBoardPainter` vẽ từ MỘT `ui.Image`
+  bằng drawImageRect; Preview overlay 0.7 bằng
+  Listener thô — GestureDetector.onTapDown chỉ bắn
+  sau khi arena phân xử nên không dùng; Hint viền
+  vàng 1,2 giây bằng Timer; `onCompleted` đúng một
+  lần qua `PlaceResult.justCompleted` rồi khóa
+  kéo), `lib/app.dart` (MaterialApp + ThemeSelect
+  nối dây: asset (theme, level 1) đầu tiên →
+  JigsawPlayScreen với ResizeImage, không có →
+  JigsawEmptyScreen; tolerance đọc từ
+  config/game_config.json với `cache: false` —
+  future cache của rootBundle treo khi sang test
+  khác, đã kiểm chứng) + `lib/main.dart` chỉ còn
+  runApp, trần gridSize 64 trong `Board.square`,
+  pubspec khai báo asset config.
+- **Khay cuộn ngang** (làm rõ §8 của contract,
+  commit bổ sung trên PR contract): 9 ô × cạnh ô
+  ≈ 1080dp > màn hình nên khay là dải cuộn ngang
+  đúng §6; kéo ngang trong khay trước long-press
+  thì thành cuộn. Test cuộn ô đích vào giữa khay
+  trước mỗi lần kéo.
+- Kiểm chứng tại máy: `evaluate.sh S1` PASS mọi
+  cổng trừ integration — pre-check S1-01..04 OK,
+  purity PASS, tests lock PASS, analyze PASS,
+  **186/186 test** (173 cũ + WID-JP-01..12 +
+  ENG-J-54), engine coverage **92,4%**. Cổng
+  integration fail tại máy chỉ vì môi trường
+  ("No supported devices connected" — VM không có
+  emulator, project không có platform desktop);
+  theo Đ11 integration là cổng CI `android-it`,
+  kết quả chờ CI của chồng. Diff `test/` +
+  `integration_test/` + tests.lock giữa nhánh test
+  và feat: rỗng.
+
 ## 2026-11-28 — S1-04: mở contract (James)
 
 - `harness/contracts/S1-04.md`: ghi 11 chốt của
