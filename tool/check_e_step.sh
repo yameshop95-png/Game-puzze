@@ -343,6 +343,78 @@ if [ "$STEP" = "S1-05" ]; then
   echo "check_e_step: OK for $STEP"
   exit 0
 fi
+# S1-06 branch (contract S1-06 §7, SA-S6-6): same
+# shape as S1-01..05, for performance + text
+# scaling. Checks:
+#   - the perf test, the perf driver and the
+#     text-scale test all exist;
+#   - no skipped tests in the text-scale directory
+#     or the perf test;
+#   - every PERF ID in the contract is declared in
+#     integration_test/perf_test.dart and every
+#     WID-FS ID in the text-scale test (declarations
+#     only for PERF — running it is the CI
+#     android-it gate, contract S1-04 Đ11).
+if [ "$STEP" = "S1-06" ]; then
+  p_test="integration_test/perf_test.dart"
+  p_driver="test_driver/perf_driver.dart"
+  f_dir="test/features/text_scale"
+  f_test="$f_dir/text_scale_test.dart"
+  if [ ! -f "$p_test" ]; then
+    echo "FAIL: $p_test does not exist"
+    exit 1
+  fi
+  if [ ! -f "$p_driver" ]; then
+    echo "FAIL: $p_driver does not exist"
+    exit 1
+  fi
+  if [ ! -f "$f_test" ]; then
+    echo "FAIL: $f_test does not exist"
+    exit 1
+  fi
+  skip_hits=$( { grep -rnE "skip[[:space:]]*:" "$f_dir" "$p_test" | grep -vE "skip[[:space:]]*:[[:space:]]*false([^A-Za-z0-9_]|$)" || true
+                 grep -rnE "@Skip\(|markTestSkipped\(" "$f_dir" "$p_test" || true; } )
+  if [ -n "$skip_hits" ]; then
+    echo "FAIL: skipped tests found under $f_dir or in $p_test:"
+    echo "$skip_hits"
+    exit 1
+  fi
+  # check_ids mirrors the S1-05 block: grep the
+  # contract for one ID prefix and require every
+  # such ID to be declared in the given file,
+  # joining lines that end in test( / testWidgets(
+  # onto the next line first (dart format wraps
+  # long names).
+  check_ids() {
+    local prefix="$1" file="$2"
+    local ids joined id
+    ids=$(grep -oE "${prefix}-[0-9]+" "$contract" | sort -u)
+    if [ -z "$ids" ]; then
+      echo "FAIL: no $prefix test IDs found in $contract"
+      exit 1
+    fi
+    joined=$(mktemp)
+    awk '
+      {
+        if (hold != "") { $0 = hold $0; hold = "" }
+        if ($0 ~ /(^|[^A-Za-z0-9_])(test|testWidgets)\([[:space:]]*$/) { hold = $0; next }
+        print
+      }
+      END { if (hold != "") print hold }' "$file" > "$joined"
+    for id in $ids; do
+      if ! grep -qE "^[[:space:]]*(test|testWidgets)\([[:space:]]*['\"]${id}([^0-9]|$)" "$joined"; then
+        echo "FAIL: contract test ID $id has no test() declaration in $file"
+        rm -f "$joined"
+        exit 1
+      fi
+    done
+    rm -f "$joined"
+  }
+  check_ids "PERF" "$p_test"
+  check_ids "WID-FS" "$f_test"
+  echo "check_e_step: OK for $STEP"
+  exit 0
+fi
 subdir=""
 case "$STEP" in
   E1) subdir="jigsaw" ;;

@@ -43,6 +43,13 @@ dev_dependencies:
     sdk: flutter
   integration_test:
     sdk: flutter
+  # Direct declaration for the perf driver
+  # (contract S1-06 §3): test_driver/perf_driver.dart
+  # imports Timeline/TimelineSummary from
+  # flutter_driver; until S1-06 it was only a
+  # transitive dependency of integration_test.
+  flutter_driver:
+    sdk: flutter
   # drift_dev pinned at S1-02 (contract SA-DB-6): the Flutter
   # 3.50.1 upgrade (Paul's Huong B decision) unblocked analyzer
   # ^13, so drift_dev resolves again - see harness/progress.md.

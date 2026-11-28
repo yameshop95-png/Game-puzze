@@ -2,6 +2,92 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-28 — S1-06: test đã khóa, sửa tràn chữ đã xong (James)
+
+- PR `test/S1-06`: `integration_test/perf_test.dart`
+  (PERF-01 `98afac35…`, PERF-02),
+  `test_driver/perf_driver.dart` (`bfdb6a3a…`),
+  `test/features/text_scale/text_scale_test.dart`
+  (WID-FS-01..03, `7ece90bc…`) — tất cả khóa vào
+  `harness/tests.lock`; `pubspec.yaml`/`pubspec.lock`
+  khai báo trực tiếp `flutter_driver` (sdk) vào
+  dev_dependencies (contract §3).
+- Nhánh `feat/S1-06-perf-text-scale`: một sửa UI
+  duy nhất, ép buộc bởi WID-FS-01 — thẻ chủ đề
+  tràn đáy 16 px ở TextScaler 2.0 khi có dòng
+  `<n> solved` (chiều cao cố định 72). Sửa:
+  `ConstrainedBox(minHeight: 72)` + padding dọc 8
+  + Stack căn giữa (contract S1-06 §11). WID-FS-02/03
+  pass ngay trên code cũ — màn chơi và màn kết
+  thúc không sửa gì. Golden `theme_select.png`
+  PASS với PNG hiện có (hash giữ nguyên
+  `4f435443…`, không sinh lại): ở tỉ lệ 1.0 thẻ
+  vẫn cao 72 và chữ giữ nguyên vị trí.
+- Kiểm chứng tại máy: `evaluate.sh S1` PASS mọi
+  cổng trừ integration — pre-check S1-01..06 OK,
+  content validator PASS, purity PASS, tests
+  lock PASS, analyze PASS, **199/199 test** (196
+  cũ + WID-FS-01..03), engine coverage **92,4%**.
+  Cổng integration fail tại máy chỉ vì "No
+  devices are connected" (Đ11 — cổng CI
+  `android-it`); perf test thuộc cổng đó, tại máy
+  đã kiểm analyze sạch + pre-check khai báo đủ
+  PERF-01/02. Diff `test/` + `integration_test/` +
+  `test_driver/` + tests.lock giữa nhánh test và
+  feat: rỗng.
+- **Perf (SA-S6-1)**: cổng emulator = indicative
+  — chờ step CI của SA-S6-3 (diff trong contract
+  §5) được áp qua web UI lên nhánh feat rồi CI
+  chạy; số đầu tiên (gồm `touch_to_image_ms`,
+  SA-S6-4 — chỉ ghi, không cổng) sẽ bổ sung vào
+  progress sau. **Cổng máy thật: vẫn CHỜ máy của
+  Paul** (mục mở contract bên dưới) — S1-06
+  không đóng cổng này.
+- **Đóng Phase S1 (SA-S6-7)**: chấm UX ≥ 8/10
+  KHÔNG nằm trong chồng này. Sau khi chồng merge
+  và các cổng tất định của S1 xanh, James đăng
+  tổng kết đóng S1 kèm bằng chứng (golden + số
+  perf indicative + kết quả WID-FS) để
+  Claude/Opus chấm trên issue #2.
+
+## 2026-11-28 — S1-06: mở contract (James)
+
+- `harness/contracts/S1-06.md`: ghi 8 chốt của
+  Opus (comment `7236919665`, SA-S6-1..SA-S6-8,
+  chốt theo khuyến nghị ở cổng `7236776816`) —
+  cổng emulator perf ghi nhãn **indicative**,
+  cổng máy thật p90 < 16 ms giữ trạng thái **CHỜ
+  (máy của Paul)** trong progress (xem mục dưới);
+  kịch bản perf 3×3 trên puzzle thật `a1p1`
+  (traceAction bao dãy kéo–đặt 9 mảnh + cuộn
+  khay, helper IT-J; 6×6 để S2-03); mẫu driver
+  duy nhất `traceAction(reportKey: 'timeline')`
+  + `integrationDriver` xuất
+  `build/*timeline_summary.json`; chỉ số phụ
+  chạm → ảnh chỉ ghi, không cổng; test cỡ chữ
+  WID-FS-01..03 cho cả 3 màn ở 320×568 dp +
+  TextScaler 2.0; prefix PERF + pre-check S1-06;
+  chấm UX đóng S1 không nằm trong chồng này
+  (SA-S6-7, việc sau merge).
+- Diff `ci.yml` của SA-S6-3 (step `flutter drive
+  --profile` riêng sau bước integration test,
+  `continue-on-error`, artifact timeline) ghi
+  nguyên văn trong contract §5 — connector không
+  đẩy được workflows nên phòng áp qua GitHub web
+  UI lên nhánh feat sau khi đăng chồng (tiền lệ
+  fix KVM của S1-04).
+- Cùng PR: khối pre-check `S1-06` trong
+  `tool/check_e_step.sh` + thêm vào `precheck_s1`
+  của `tool/evaluate.sh`.
+- Kiểm chứng tại máy: pre-check S1-06 fail đúng
+  lý do đầu tiên (`integration_test/perf_test.dart`
+  chưa có); S1-01..05 vẫn OK.
+- **Cổng perf máy thật (SA-S6-1): CHỜ** — chờ
+  Paul cung cấp máy Android cấu hình thấp chuẩn
+  (model sẽ ghi vào `harness/thresholds.yaml`).
+  S1-06 không tự đóng cổng này; số emulator là
+  indicative, không thay thế.
+
 ## 2026-11-28 — S1-05: test đã khóa, completion đã code (James)
 
 - PR `test/S1-05`: `completion_screen_test.dart`

@@ -102,6 +102,14 @@ class _ThemeSelectScreenState extends State<ThemeSelectScreen> {
 /// the name, only when it is above zero (SA-S5-6).
 /// The lock badge is an overlay in the top-right
 /// corner and never covers the name (SA-UI-1).
+///
+/// The card is at least 72 dp tall but grows with
+/// its content (contract S1-06 §6 appendix): a
+/// fixed 72 dp height overflowed by 16 px at 200%
+/// text when the solved line was present
+/// (WID-FS-01). At 100% text the content is shorter
+/// than 72 dp, so the rendered height — and the
+/// WID-TS-10 golden — is unchanged.
 class _ThemeCard extends StatelessWidget {
   final ThemeViewModel theme;
   final VoidCallback onTap;
@@ -135,30 +143,39 @@ class _ThemeCard extends StatelessWidget {
           onTap: onTap,
           excludeFromSemantics: true,
           behavior: HitTestBehavior.opaque,
-          child: SizedBox(
-            height: 72,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 72),
             child: Stack(
+              // The inner Center sizes to its content
+              // when the height is unbounded, so the
+              // stack centres it within the min-height
+              // box (keeps the 100% layout identical
+              // to the old fixed-height card).
+              alignment: Alignment.center,
               children: [
                 Center(
                   child: ExcludeSemantics(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          theme.displayName,
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        if (theme.solvedCount > 0)
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
                           Text(
-                            '${theme.solvedCount} solved',
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
-                                ),
+                            theme.displayName,
+                            style: Theme.of(context).textTheme.titleLarge,
                           ),
-                      ],
+                          if (theme.solvedCount > 0)
+                            Text(
+                              '${theme.solvedCount} solved',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                                  ),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
