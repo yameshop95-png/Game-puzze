@@ -2,6 +2,72 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-28 — S1-05: test đã khóa, completion đã code (James)
+
+- PR `test/S1-05`: `completion_screen_test.dart`
+  (WID-CP-01..06, `b8dc4c37…`),
+  `completion_flow_test.dart` (INT-CS-01..03,
+  `4614c7cd…`), WID-JP-10 cập nhật chữ ký
+  `onCompleted(Duration)` theo SA-S5-4
+  (`e55d6229…`), WID-TS-03 cập nhật nhãn SA-S5-6 +
+  WID-TS-01b (`73c9b1c4…`),
+  `.maestro/persistence_restart.yaml` (`7867448e…`)
+  — tất cả khóa vào `harness/tests.lock`. Ba cập
+  nhật ép buộc (contract S1-05 §12, khóa lại hash):
+  hai integration test của S1-04 sửa cơ học theo
+  chữ ký mới (`b6ae974a…`, `ad307c17…`) và
+  UNIT-AL-12 cập nhật sang trạng thái content thật
+  (`1339896e…`).
+- Nhánh `feat/S1-05-completion`:
+  `lib/features/completion/completion_screen.dart`
+  (Semantics `Completed`, Time/Best `m:ss`, Play
+  again qua callback của shell, Back to themes
+  popUntil); Stopwatch + chữ ký `onCompleted` trong
+  màn chơi; `lib/app.dart` thành StatefulWidget giữ
+  MỘT `ProgressDao` dùng chung (SA-S5-5), seed
+  `GAME_SEED` (SA-S5-2), handler hoàn thành:
+  markSolved → pushReplacement CompletionScreen kể
+  cả khi ghi lỗi, khóa asset `content/` + playPath;
+  thẻ chủ đề hiện `<n> solved` + nhãn mới (SA-S5-6);
+  `content/manifest.json` với puzzle thật `a1p1`
+  ("Weaning the Calves", Rosa Bonheur 1879, The Met
+  object 435703, CC0) + pubspec `- content/` và
+  dòng pack riêng (thư mục asset không đệ quy — đã
+  kiểm chứng bằng `flutter build bundle`); hai fix
+  pipeline tồn đọng của S1-01 (validator nhận
+  manifest dạng danh sách + pattern image_id nới
+  ba dạng đã chốt) — validator PASS trên manifest
+  thật, 25/25 test pipeline OK.
+- Golden `theme_select.png`: kịch bản WID-TS-10
+  mọi solvedCount = 0 nên render không đổi — test
+  golden PASS với PNG hiện có, hash giữ nguyên
+  `4f435443…`, không cần upload đợt này.
+- Kiểm chứng tại máy: `evaluate.sh S1` PASS mọi
+  cổng trừ integration — pre-check S1-01..05 OK,
+  content validator PASS, purity PASS, tests lock
+  PASS, analyze PASS, **196/196 test** (186 cũ +
+  WID-CP-01..06 + INT-CS-01..03 + WID-TS-01b),
+  engine coverage **92,4%**. Cổng integration fail
+  tại máy chỉ vì "No devices are connected" (Đ11 —
+  cổng CI `android-it`). Diff `test/` +
+  `integration_test/` + `.maestro/` + tests.lock
+  giữa nhánh test và feat: rỗng.
+- **Maestro (§0.5 + SA-S5-7)**: flow
+  `persistence_restart.yaml` đã viết xong (seed 42,
+  thứ tự khay [3, 4, 8, 0, 2, 1, 5, 6, 7], hình học
+  Đ7 1080×2340, long-press = swipe tại chỗ 600ms
+  rồi drag) và bàn giao — **chưa chạy kiểm chứng
+  tại máy James** (VM không có emulator/APK build);
+  lần chạy thật đầu tiên là việc local/schedule của
+  Paul/Claude, CI Maestro là việc hạ tầng riêng.
+- **Binary chờ upload web UI** (connector không đẩy
+  được): `content/packs/animals/1/a1p1/play.webp`
+  (sha256 `3348d0a0…`) và `thumb.webp` (`72e97b36…`)
+  lên nhánh `feat/S1-05-completion` — bản copy +
+  nguồn CC0 ở `~/workspace/puzze-game/content-upload/`
+  (SOURCE.md). Chỉ nhánh feat cần; CI job content
+  chỉ cần manifest.json (text, đã đẩy qua connector).
+
 ## 2026-11-28 — S1-05: mở contract (James)
 
 - `harness/contracts/S1-05.md`: ghi 8 chốt của
