@@ -2,6 +2,26 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-28 — S2-02: test đã khóa (James)
+
+- PR `test/S2-02`: `test/features/jigsaw_play/jigsaw_play_test.dart`
+  thêm nhóm S2-02 (WID-JP-13..22: chọn ở khay,
+  chạm lại bỏ chọn, đổi chọn, chạm ô trống đặt
+  đúng/đặt sai, chạm occupant đổi chọn, chọn
+  mảnh board + di chuyển bằng chạm, cuộn giữ
+  chọn, kéo thật dọn chọn, giải trọn bằng chạm
+  → `onCompleted` 1 lần) — hash mới của file
+  `aee373ba…`; file mới
+  `integration_test/jigsaw_tap_place_test.dart`
+  (IT-J-07 giải trọn 3×3 chỉ bằng chạm, IT-J-08
+  chọn → đặt sai → di chuyển lại bằng chạm —
+  `737af033…`). Cả hai khóa vào
+  `harness/tests.lock`; pre-check `S2-02` OK ở
+  giai đoạn test (verify tests lock OK). Bộ test
+  tham chiếu field `selectedPieceId` của painter
+  chưa tồn tại — đỏ biên dịch cho tới nhánh feat
+  (đúng quy trình test-viết-trước).
+
 ## 2026-11-28 — S2-02: mở contract (James)
 
 - `harness/contracts/S2-02.md`: ghi 10 chốt của
