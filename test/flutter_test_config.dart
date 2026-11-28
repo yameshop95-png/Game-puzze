@@ -44,8 +44,8 @@ Future<void> _loadRobotoFromSdk() async {
 
 /// FLUTTER_ROOT is set by the flutter tool when it
 /// runs tests; this fallback derives the SDK root
-/// from the flutter_tester executable path
-/// (<root>/bin/cache/artifacts/engine/<platform>/flutter_tester)
+/// from the flutter_tester executable path (inside
+/// bin/cache/artifacts/engine/ under the SDK root)
 /// in case the variable is ever absent.
 String? _sdkRootFallback() {
   var dir = File(Platform.resolvedExecutable).parent;
