@@ -155,11 +155,39 @@ def check_duplicates(manifests: list[dict]) -> list[str]:
     return errors
 
 
+def validate_data(data) -> Result:
+    """Validate parsed manifest JSON.
+
+    A manifest file holds either a single record (the
+    pipeline form) or a LIST of records — the app manifest
+    form settled at S1-01 (SA-1) and first shipped at
+    S1-05 (contract S1-05 §2). Lists validate every record
+    with validate() and then run the duplicate check
+    across the whole list. validate(dict) itself is
+    unchanged; the pipeline test suite uses it directly.
+    """
+    if isinstance(data, list):
+        res = Result()
+        records = []
+        for i, record in enumerate(data):
+            if not isinstance(record, dict):
+                res.errors.append(f"record {i}: is not of type 'object'")
+                continue
+            records.append(record)
+            r = validate(record)
+            iid = record.get("image_id", f"#{i}")
+            res.errors.extend(f"{iid}: {e}" for e in r.errors)
+            res.warnings.extend(r.warnings)
+        res.errors.extend(check_duplicates(records))
+        return res
+    return validate(data)
+
+
 def main(paths: list[str]) -> int:
     failed = 0
     for p in paths:
         manifest = json.loads(Path(p).read_text(encoding="utf-8"))
-        res = validate(manifest)
+        res = validate_data(manifest)
         status = "PASS" if res.ok else "FAIL"
         print(f"{status} {p}")
         for e in res.errors:

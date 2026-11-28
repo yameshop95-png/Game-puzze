@@ -94,16 +94,25 @@ class _ThemeSelectScreenState extends State<ThemeSelectScreen> {
 }
 
 /// One theme card. The semantics label lives on the
-/// card's tap target (SA-UI-7): the plain theme name,
-/// or the name plus ', locked' while the next
-/// level's gate is closed. The lock badge is an overlay in the
-/// top-right corner and never covers the name
-/// (SA-UI-1).
+/// card's tap target: "`<Name>` theme" (SA-S5-6 of
+/// S1-05), plus ", `<n>` solved" when the theme has
+/// solves, plus the SA-UI-7 ", locked" suffix while
+/// the next level's gate is closed. The card shows
+/// the solved count as a small secondary line under
+/// the name, only when it is above zero (SA-S5-6).
+/// The lock badge is an overlay in the top-right
+/// corner and never covers the name (SA-UI-1).
 class _ThemeCard extends StatelessWidget {
   final ThemeViewModel theme;
   final VoidCallback onTap;
 
   const _ThemeCard({required this.theme, required this.onTap});
+
+  String get _label {
+    final solved = theme.solvedCount > 0 ? ', ${theme.solvedCount} solved' : '';
+    final locked = theme.nextLevelLocked ? ', locked' : '';
+    return '${theme.displayName} theme$solved$locked';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -118,7 +127,7 @@ class _ThemeCard extends StatelessWidget {
     return Semantics(
       container: true,
       button: true,
-      label: locked ? '${theme.displayName}, locked' : theme.displayName,
+      label: _label,
       onTap: onTap,
       child: Card(
         clipBehavior: Clip.antiAlias,
@@ -132,9 +141,24 @@ class _ThemeCard extends StatelessWidget {
               children: [
                 Center(
                   child: ExcludeSemantics(
-                    child: Text(
-                      theme.displayName,
-                      style: Theme.of(context).textTheme.titleLarge,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          theme.displayName,
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        if (theme.solvedCount > 0)
+                          Text(
+                            '${theme.solvedCount} solved',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                          ),
+                      ],
                     ),
                   ),
                 ),

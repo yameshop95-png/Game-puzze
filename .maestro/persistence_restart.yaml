@@ -1,0 +1,215 @@
+# persistence_restart.yaml — S1-05 (contract harness/contracts/S1-05.md §8, SA-S5-7)
+#
+# Solve puzzle a1p1, stop the app, relaunch, and check the
+# Animals card shows the solve (persistence across restart).
+#
+# Requires: --dart-define=GAME_SEED=42, puzzle a1p1 (animals/1)
+# Build the app with that define before running this flow,
+# e.g. flutter build apk --debug --dart-define=GAME_SEED=42
+# and install it on the emulator first.
+#
+# Geometry (SA-S5-7): API 30 x86_64, 1080x2340 (Pixel 4
+# default of android-emulator-runner). Board geometry per
+# S1-04 §8 in device px: board width = 1080 - 32 = 1048,
+# cell ~= 349, board top = 56, tray top = 56 + 1048 + 8 =
+# 1112, tray centre Y = 1168. Board cell centres:
+#   x: col 0 = 191, col 1 = 540, col 2 = 889
+#   y: row 0 = 231, row 1 = 580, row 2 = 929
+# Tray slot centres are CONTENT coordinates (the tray
+# scrolls horizontally, S1-04 §8): slot s centre =
+# 16 + 349*(s + 0.5); the visible centre subtracts the
+# current tray scroll.
+#
+# Tray order with GAME_SEED=42 is deterministic:
+# TrayOrder.shuffled(9, Random(42)) = [3, 4, 8, 0, 2, 1, 5, 6, 7]
+# (slot -> piece). Pieces are solved in slot order so the
+# tray scroll only ever moves forward:
+#   slot:        0   1   2   3    4    5    6    7    8
+#   piece:       3   4   8   0    2    1    5    6    7
+#   scroll:      0   0   349 699  1048 1397 1747 2096 2096
+#
+# long-press = swipe in-place 600ms, then drag
+# (kLongPressTimeout = 500ms + buffer, SA-S5-7).
+#
+# NOTE (MUSE_STEPS §0.5): this flow is handed over as
+# written; it has NOT been run by James (no emulator on
+# his VM). First real run is a local/scheduled run by
+# Paul/Claude; adjust coordinates here if that run shows
+# the emulator profile differs.
+appId: com.paperfox.game_puzzle
+---
+- launchApp
+- assertVisible: "Animals"
+- tapOn: "Animals"
+- assertVisible: "Weaning the Calves"
+
+# --- Piece 3 (slot 0, tray scroll 0, visible centre 191) -> home row 1, col 0 (191, 580)
+- swipe:
+    startX: 191
+    startY: 1168
+    endX: 191
+    endY: 1168
+    duration: 600
+- swipe:
+    startX: 191
+    startY: 1168
+    endX: 191
+    endY: 580
+    duration: 400
+
+# --- Piece 4 (slot 1, tray scroll 0, visible centre 540) -> home row 1, col 1 (540, 580)
+- swipe:
+    startX: 540
+    startY: 1168
+    endX: 540
+    endY: 1168
+    duration: 600
+- swipe:
+    startX: 540
+    startY: 1168
+    endX: 540
+    endY: 580
+    duration: 400
+
+# --- Scroll tray +349, then piece 8 (slot 2, visible centre 540) -> home row 2, col 2 (889, 929)
+- swipe:
+    startX: 1000
+    startY: 1168
+    endX: 651
+    endY: 1168
+    duration: 300
+- swipe:
+    startX: 540
+    startY: 1168
+    endX: 540
+    endY: 1168
+    duration: 600
+- swipe:
+    startX: 540
+    startY: 1168
+    endX: 889
+    endY: 929
+    duration: 400
+
+# --- Scroll tray +350 (total 699), then piece 0 (slot 3, visible centre 540) -> home row 0, col 0 (191, 231)
+- swipe:
+    startX: 1000
+    startY: 1168
+    endX: 650
+    endY: 1168
+    duration: 300
+- swipe:
+    startX: 540
+    startY: 1168
+    endX: 540
+    endY: 1168
+    duration: 600
+- swipe:
+    startX: 540
+    startY: 1168
+    endX: 191
+    endY: 231
+    duration: 400
+
+# --- Scroll tray +349 (total 1048), then piece 2 (slot 4, visible centre 540) -> home row 0, col 2 (889, 231)
+- swipe:
+    startX: 1000
+    startY: 1168
+    endX: 651
+    endY: 1168
+    duration: 300
+- swipe:
+    startX: 540
+    startY: 1168
+    endX: 540
+    endY: 1168
+    duration: 600
+- swipe:
+    startX: 540
+    startY: 1168
+    endX: 889
+    endY: 231
+    duration: 400
+
+# --- Scroll tray +349 (total 1397), then piece 1 (slot 5, visible centre 540) -> home row 0, col 1 (540, 231)
+- swipe:
+    startX: 1000
+    startY: 1168
+    endX: 651
+    endY: 1168
+    duration: 300
+- swipe:
+    startX: 540
+    startY: 1168
+    endX: 540
+    endY: 1168
+    duration: 600
+- swipe:
+    startX: 540
+    startY: 1168
+    endX: 540
+    endY: 231
+    duration: 400
+
+# --- Scroll tray +350 (total 1747), then piece 5 (slot 6, visible centre 540) -> home row 1, col 2 (889, 580)
+- swipe:
+    startX: 1000
+    startY: 1168
+    endX: 650
+    endY: 1168
+    duration: 300
+- swipe:
+    startX: 540
+    startY: 1168
+    endX: 540
+    endY: 1168
+    duration: 600
+- swipe:
+    startX: 540
+    startY: 1168
+    endX: 889
+    endY: 580
+    duration: 400
+
+# --- Scroll tray +349 (total 2096, max), then piece 6 (slot 7, visible centre 540) -> home row 2, col 0 (191, 929)
+- swipe:
+    startX: 1000
+    startY: 1168
+    endX: 651
+    endY: 1168
+    duration: 300
+- swipe:
+    startX: 540
+    startY: 1168
+    endX: 540
+    endY: 1168
+    duration: 600
+- swipe:
+    startX: 540
+    startY: 1168
+    endX: 191
+    endY: 929
+    duration: 400
+
+# --- Piece 7 (slot 8, tray scroll already max, visible centre 889) -> home row 2, col 1 (540, 929)
+- swipe:
+    startX: 889
+    startY: 1168
+    endX: 889
+    endY: 1168
+    duration: 600
+- swipe:
+    startX: 889
+    startY: 1168
+    endX: 540
+    endY: 929
+    duration: 400
+
+# --- Completion screen (pushed after markSolved resolves)
+- assertVisible: "Completed"
+- assertVisible: "Play again"
+
+# --- Restart: the solve must survive in the database
+- stopApp
+- launchApp
+- assertVisible: "1 solved"

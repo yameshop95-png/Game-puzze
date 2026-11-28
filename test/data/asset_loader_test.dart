@@ -176,11 +176,21 @@ void main() {
 
     test('UNIT-AL-12 fake manifest lives only under test/fixtures', () {
       expect(File('test/fixtures/manifest_valid.json').existsSync(), isTrue);
-      expect(File('content/manifest.json').existsSync(), isFalse);
-      final contentDir = Directory('content');
-      if (contentDir.existsSync()) {
-        expect(contentDir.listSync(recursive: true).whereType<File>(), isEmpty);
-      }
+      // S1-05 update (SA-S5-1): real content shipped — the
+      // app manifest now lives at content/manifest.json and
+      // holds the settled single a1p1 record (animals/1).
+      // The S1-01 form of this test asserted the file did
+      // not exist yet; that premise ended at S1-05.
+      final real = File('content/manifest.json');
+      expect(real.existsSync(), isTrue);
+      final decoded = jsonDecode(real.readAsStringSync());
+      expect(decoded, isA<List<dynamic>>());
+      final records = decoded as List<dynamic>;
+      expect(records, hasLength(1));
+      final record = records.single as Map<String, dynamic>;
+      expect(record['image_id'], 'a1p1');
+      expect(record['theme'], 'animals');
+      expect(record['level'], 1);
     });
   });
 }

@@ -71,6 +71,13 @@ flutter:
   # config (contract S1-04 §6).
   assets:
     - config/game_config.json
+    # Game content: the manifest and every pack under it
+    # (contract S1-05 §2, SA-S5-1). Directory entries are
+    # NOT recursive in this Flutter version (verified with
+    # flutter build bundle: only content/manifest.json was
+    # bundled), so each pack directory is declared too.
+    - content/
+    - content/packs/animals/1/a1p1/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

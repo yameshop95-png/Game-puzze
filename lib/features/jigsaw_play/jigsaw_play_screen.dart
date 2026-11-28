@@ -29,7 +29,10 @@ class JigsawPlayScreen extends StatefulWidget {
   final Random? rng;
   final double snapToleranceRatio;
   final int gridSize;
-  final void Function()? onCompleted;
+
+  /// Fired exactly once when the last piece lands home,
+  /// carrying the measured solve time (S1-05, SA-S5-4).
+  final void Function(Duration elapsed)? onCompleted;
 
   const JigsawPlayScreen({
     super.key,
@@ -49,6 +52,10 @@ class _JigsawPlayScreenState extends State<JigsawPlayScreen> {
   late final Board _board;
   late final TrayOrder _trayOrder;
   int _boardVersion = 0;
+
+  /// Solve timer (S1-05, SA-S5-4): starts when the
+  /// decoded image first lands, stops at completion.
+  late final Stopwatch _stopwatch;
 
   ui.Image? _uiImage;
   ImageStream? _imageStream;
@@ -84,6 +91,7 @@ class _JigsawPlayScreenState extends State<JigsawPlayScreen> {
   @override
   void initState() {
     super.initState();
+    _stopwatch = Stopwatch();
     _board = Board.square(widget.gridSize);
     _trayOrder = TrayOrder.shuffled(
       pieceCount: _board.totalPieces,
@@ -100,7 +108,11 @@ class _JigsawPlayScreenState extends State<JigsawPlayScreen> {
     if (oldListener != null) _imageStream?.removeListener(oldListener);
     final listener = ImageStreamListener(
       (info, _) {
-        if (mounted) setState(() => _uiImage = info.image);
+        if (!mounted) return;
+        // SA-S5-4: the solve clock starts when the
+        // decoded image is first set.
+        if (_uiImage == null) _stopwatch.start();
+        setState(() => _uiImage = info.image);
       },
       // A missing play image (e.g. the shell wiring before
       // real content exists) must never crash the screen:
@@ -277,7 +289,10 @@ class _JigsawPlayScreenState extends State<JigsawPlayScreen> {
     });
     if (justCompleted && !_completedFired) {
       _completedFired = true;
-      widget.onCompleted?.call();
+      // SA-S5-4: stop the clock at completion, before
+      // the callback reads it.
+      _stopwatch.stop();
+      widget.onCompleted?.call(_stopwatch.elapsed);
     }
   }
 

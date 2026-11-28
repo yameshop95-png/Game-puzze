@@ -1,14 +1,26 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 import 'data/app_database.dart';
 import 'data/progress_dao.dart';
+import 'features/completion/completion_screen.dart';
 import 'features/jigsaw_play/jigsaw_play_screen.dart';
 import 'features/theme_select/theme_progress.dart';
 import 'features/theme_select/theme_select_screen.dart';
 import 'services/asset_loader.dart';
+
+/// Deterministic tray seed for device flows (contract
+/// S1-05 §3, SA-S5-2): set with
+/// `--dart-define=GAME_SEED=<n>` (Maestro uses 42).
+/// Production builds pass nothing, the seed stays null
+/// and puzzles shuffle freely.
+const String _seedEnv = String.fromEnvironment('GAME_SEED');
+final int? _gameSeed = _seedEnv.isEmpty ? null : int.tryParse(_seedEnv);
+
+Random? _seededRng() => _gameSeed == null ? null : Random(_gameSeed);
 
 /// The app shell (contract S1-04 §5): a [MaterialApp]
 /// whose home is the theme select screen, wired so
@@ -17,14 +29,31 @@ import 'services/asset_loader.dart';
 /// content yet. Wiring lives here, not in the screens
 /// (contract S1-03 SA-UI-4).
 ///
-/// [themeProvider] and [assetLoader] are test-only
-/// overrides; production builds the real provider over
-/// the drift database exactly as S1-02/S1-03 settled.
-class MyApp extends StatelessWidget {
+/// S1-05 (SA-S5-5): the shell owns ONE [ProgressDao]
+/// for the app's whole life — the theme provider reads
+/// through it and the completion handler writes through
+/// the same instance.
+///
+/// [themeProvider], [assetLoader] and [dao] are
+/// test-only overrides; production builds the real
+/// provider and DAO over the drift database exactly as
+/// S1-02/S1-03 settled.
+class MyApp extends StatefulWidget {
   final ThemeProgressProvider? themeProvider;
   final AssetLoader? assetLoader;
+  final ProgressDao? dao;
 
-  const MyApp({super.key, this.themeProvider, this.assetLoader});
+  const MyApp({super.key, this.themeProvider, this.assetLoader, this.dao});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  /// The single shared DAO (SA-S5-5); injected in
+  /// tests, production drift database otherwise.
+  late final ProgressDao _dao =
+      widget.dao ?? ProgressDao(AppDatabase.production());
 
   @override
   Widget build(BuildContext context) {
@@ -32,16 +61,17 @@ class MyApp extends StatelessWidget {
       title: 'Game Puzzle',
       home: Builder(
         builder: (context) {
-          final loader = assetLoader ?? AssetLoader();
+          final loader = widget.assetLoader ?? AssetLoader();
           final provider =
-              themeProvider ??
+              widget.themeProvider ??
               AssetThemeProgressProvider(
                 assetLoader: loader,
-                progressDao: ProgressDao(AppDatabase.production()),
+                progressDao: _dao,
               );
           return ThemeSelectScreen(
             provider: provider,
-            onThemeSelected: (themeId) => _openPuzzle(context, loader, themeId),
+            onThemeSelected: (themeId) =>
+                _openPuzzle(context, loader, _dao, themeId),
           );
         },
       ),
@@ -60,6 +90,7 @@ class MyApp extends StatelessWidget {
 Future<void> _openPuzzle(
   BuildContext context,
   AssetLoader loader,
+  ProgressDao dao,
   String themeId,
 ) async {
   PuzzleAsset? found;
@@ -81,11 +112,72 @@ Future<void> _openPuzzle(
     MaterialPageRoute<void>(
       builder: (_) => asset == null
           ? const JigsawEmptyScreen()
-          : JigsawPlayScreen(
-              asset: asset,
-              image: ResizeImage(AssetImage(asset.playPath), width: 1080),
-              snapToleranceRatio: tolerance,
+          : _playScreen(context, dao, asset, tolerance),
+    ),
+  );
+}
+
+/// Builds a play screen for [asset] with the shell's
+/// completion wiring (used for the first open and for
+/// Play again). The image key prefixes the asset's
+/// content-relative play path (S1-01 §4: paths are
+/// relative to the `content/` directory).
+JigsawPlayScreen _playScreen(
+  BuildContext context,
+  ProgressDao dao,
+  PuzzleAsset asset,
+  double tolerance,
+) {
+  return JigsawPlayScreen(
+    asset: asset,
+    image: ResizeImage(AssetImage('content/${asset.playPath}'), width: 1080),
+    rng: _seededRng(),
+    snapToleranceRatio: tolerance,
+    onCompleted: (elapsed) =>
+        _onPuzzleCompleted(context, dao, asset, tolerance, elapsed),
+  );
+}
+
+/// Completion wiring (contract S1-05 §6, SA-S5-5):
+/// record the solve first, then show the completion
+/// screen — even when the write fails (the failure is
+/// only debug-logged, never a crash). Play again pops
+/// the completion screen and pushes a fresh play screen
+/// for the same asset.
+Future<void> _onPuzzleCompleted(
+  BuildContext context,
+  ProgressDao dao,
+  PuzzleAsset asset,
+  double tolerance,
+  Duration elapsed,
+) async {
+  try {
+    await dao.markSolved(
+      asset.id,
+      ProgressModes.jigsaw,
+      solvedAt: DateTime.now(),
+      timeSeconds: elapsed.inSeconds,
+    );
+  } catch (e) {
+    debugPrint('markSolved failed for ${asset.id}: $e');
+  }
+  if (!context.mounted) return;
+  Navigator.of(context).pushReplacement(
+    MaterialPageRoute<void>(
+      builder: (_) => CompletionScreen(
+        puzzleName: asset.title.isNotEmpty ? asset.title : asset.theme,
+        elapsed: elapsed,
+        // S1-05: the just-written time is the best;
+        // querying the real best is left to S1-06+.
+        bestSeconds: elapsed.inSeconds,
+        onPlayAgain: () {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute<void>(
+              builder: (_) => _playScreen(context, dao, asset, tolerance),
             ),
+          );
+        },
+      ),
     ),
   );
 }

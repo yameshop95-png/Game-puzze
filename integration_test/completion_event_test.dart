@@ -3,6 +3,9 @@
 // The completion event is counted by a harness callback wrapped
 // around the play screen (contract §4): S1-04 writes nothing to
 // the database and shows no end screen — that is S1-05.
+// S1-05 note (SA-S5-4): onCompleted now carries a Duration;
+// the counting callbacks below ignore it — `(_) => ...` —
+// assertions unchanged.
 import 'dart:math';
 import 'dart:ui' as ui;
 
@@ -142,7 +145,7 @@ void main() {
               asset: _asset,
               image: image,
               rng: Random(42),
-              onCompleted: () => completions++,
+              onCompleted: (_) => completions++,
             ),
           ),
         );
@@ -176,7 +179,7 @@ void main() {
               asset: _asset,
               image: image,
               rng: Random(42),
-              onCompleted: () => completions++,
+              onCompleted: (_) => completions++,
             ),
           ),
         );
