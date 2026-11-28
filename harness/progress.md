@@ -2,6 +2,64 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-28 — S1-03: test đã khóa, ThemeSelect đã code (James)
+
+- PR `test/S1-03`: `theme_select_test.dart` +
+  `theme_view_model_test.dart` (WID-TS-01..15), khóa
+  hash vào `harness/tests.lock` (test `b4d99a71…`,
+  unit `0062190e…`, golden PNG `4f435443…` — PNG
+  sinh tại máy local bằng `--update-goldens`, chờ
+  Paul/Claude bổ sung vào nhánh test qua web UI vì
+  connector không đẩy được binary, SA-UI-5).
+- Nhánh `feat/S1-03-theme-select`:
+  `lib/features/theme_select/theme_progress.dart`
+  (catalog cố định SA-UI-2, `ThemeViewModel`,
+  `ThemeProgressProvider`, `computeThemeViewModel`
+  — solvedCount là hợp hai mode theo luật E5,
+  totalOwned = puzzleCount tới S3,
+  `AssetThemeProgressProvider`) +
+  `theme_select_screen.dart` (5 thẻ, badge khóa
+  overlay, Semantics theo SA-UI-7, callback
+  `onThemeSelected`, không đụng main.dart). Thẻ dùng
+  một node Semantics duy nhất mang cả nhãn + hành
+  động chạm (GestureDetector loại khỏi semantics) —
+  InkWell tự tạo node chạm không nhãn khiến
+  labeledTapTargetGuideline fail, đã kiểm chứng.
+- Kiểm chứng tại máy: `evaluate.sh S1` XANH TOÀN
+  BỘ — pre-check S1-01/S1-02/S1-03 OK, purity PASS,
+  tests lock PASS, analyze PASS, **173/173 test**
+  (158 cũ + WID-TS-01..15, gồm golden pass trên
+  Linux), engine coverage 92,4%.
+- Ghi chú chồng: PR contract #35 có thêm 1 commit
+  fix (doc-comment chứa dấu `<>` làm analyze fail
+  `unintended_html_in_doc_comment` trong
+  `test/flutter_test_config.dart` + refresh hash
+  trong tests.lock) — sửa trên PR contract còn
+  draft, theo tiền lệ S1-02.
+
+## 2026-11-28 — S1-03: mở contract (James)
+
+- `harness/contracts/S1-03.md`: ghi nguyên 7 chốt
+  SA-UI-1..7 của Opus (comment `7231445982`) — 5 thẻ
+  chủ đề, khóa = cổng cấp tiếp theo qua gate.dart,
+  catalog cố định theo schema enum, provider tiêm
+  interface + `computeThemeViewModel`, không đụng
+  main.dart, golden phương án (a) với font Roboto từ
+  SDK, Test ID `WID-TS-01..15`.
+- Cùng PR: khối pre-check `S1-03` trong
+  `tool/check_e_step.sh` + `tool/evaluate.sh` chạy
+  thêm khối này; `test/flutter_test_config.dart` nạp
+  Roboto từ Flutter SDK cho golden (SA-UI-5); thư
+  mục `test/goldens/` với file giữ chỗ `.gitkeep`
+  (PNG sinh ở bước test, lên nhánh test qua web UI
+  vì connector không đẩy được binary). Hai file hỗ
+  trợ test tạo ở bước này đã khóa hash vào
+  `harness/tests.lock`.
+- Kiểm chứng tại máy: pre-check S1-03 fail đúng lý
+  do đầu tiên ở giai đoạn contract
+  (`lib/features/theme_select/` chưa có); S1-01 +
+  S1-02 vẫn OK.
+
 ## 2026-11-28 — S1-02: PR #31 đã merge — chồng đã rebase lên main mới, feat đã push + mở PR (James)
 
 - PR `test/S1-02`: `app_database_test.dart`
