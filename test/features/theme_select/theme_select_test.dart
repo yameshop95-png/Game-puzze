@@ -272,6 +272,18 @@ void main() {
     },
   );
 
+  testWidgets('WID-TS-11 meets textContrastGuideline', (tester) async {
+    final handle = tester.ensureSemantics();
+    await pumpScreen(
+      tester,
+      FakeThemeProgressProvider(() async => catalogModels()),
+    );
+    await tester.pumpAndSettle();
+
+    await expectLater(tester, meetsGuideline(textContrastGuideline));
+    handle.dispose();
+  });
+
   testWidgets('WID-TS-10 golden of the theme select screen', (tester) async {
     await pumpScreen(
       tester,

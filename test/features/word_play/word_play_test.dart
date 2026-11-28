@@ -490,4 +490,151 @@ void main() {
       expect(received, 4);
     },
   );
+
+  // ---- S2-04: Semantics + screen reader (SA-J4-4/6) ----
+
+  testWidgets(
+    'WID-WP-13 pool chips carry word-bank labels and both zones are labelled semantics containers',
+    (tester) async {
+      final handle = tester.ensureSemantics();
+      await _pumpWord(tester);
+
+      const tokens = ['Every', 'calf', 'has', 'its', 'own', 'mood.'];
+      for (final token in tokens) {
+        expect(
+          find.bySemanticsLabel('$token, in word bank'),
+          findsOneWidget,
+          reason: token,
+        );
+      }
+      expect(
+        find.byWidgetPredicate(
+          (w) =>
+              w is Semantics &&
+              w.container &&
+              w.properties.label == 'Your sentence',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byWidgetPredicate(
+          (w) =>
+              w is Semantics &&
+              w.container &&
+              w.properties.label == 'Word bank',
+        ),
+        findsOneWidget,
+      );
+      handle.dispose();
+    },
+  );
+
+  testWidgets(
+    'WID-WP-14 answer chips are labelled with their position and returning one relabels the rest',
+    (tester) async {
+      final handle = tester.ensureSemantics();
+      await _pumpWord(tester);
+
+      await _tapPool(tester, 2); // has
+      await _tapPool(tester, 0); // Every
+      expect(
+        find.bySemanticsLabel('has, in your sentence, position 1 of 2'),
+        findsOneWidget,
+      );
+      expect(
+        find.bySemanticsLabel('Every, in your sentence, position 2 of 2'),
+        findsOneWidget,
+      );
+      expect(find.bySemanticsLabel('has, in word bank'), findsNothing);
+
+      await _tapAnswer(tester, 2);
+      expect(find.bySemanticsLabel('has, in word bank'), findsOneWidget);
+      expect(
+        find.bySemanticsLabel('Every, in your sentence, position 1 of 1'),
+        findsOneWidget,
+      );
+      handle.dispose();
+    },
+  );
+
+  testWidgets('WID-WP-15 the wrong-row notice is a live region', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    await _pumpWord(tester);
+
+    for (final i in [1, 0, 2, 3, 4, 5]) {
+      await _tapPool(tester, i);
+    }
+    expect(find.text(_notice), findsOneWidget);
+
+    final node = tester.semantics.find(find.text(_notice));
+    expect(node.getSemanticsData().flagsCollection.isLiveRegion, isTrue);
+    handle.dispose();
+  });
+
+  testWidgets(
+    'WID-WP-16 a correct sentence announces Puzzle completed once; a wrong full row announces nothing',
+    (tester) async {
+      final handle = tester.ensureSemantics();
+      final completions = <Duration>[];
+      await _pumpWord(tester, completions: completions);
+
+      List<String> drain() => [
+        for (final a in tester.binding.takeAnnouncements()) a.message,
+      ];
+      drain();
+
+      // Full but wrong: no announcement (the
+      // notice is a live region instead, SA-J4-4).
+      for (final i in [1, 0, 2, 3, 4, 5]) {
+        await _tapPool(tester, i);
+      }
+      await tester.pump();
+      expect(drain(), isEmpty);
+      expect(completions, isEmpty);
+
+      for (final i in [5, 4, 3, 2, 0, 1]) {
+        await _tapAnswer(tester, i);
+      }
+      drain();
+      await _solveInOrder(tester, 6);
+      await tester.pump();
+      expect(completions, hasLength(1));
+      expect(drain().where((m) => m == 'Puzzle completed'), hasLength(1));
+      handle.dispose();
+    },
+  );
+
+  testWidgets('WID-WP-17 mode select meets the accessibility guidelines', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    final image = (await tester.runAsync(_testImage))!;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ModeSelectScreen(
+          asset: _asset,
+          image: image,
+          onJigsawSelected: (_) {},
+          onWordsSelected: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await expectLater(tester, meetsGuideline(textContrastGuideline));
+    await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+    handle.dispose();
+  });
+
+  testWidgets('WID-WP-18 word play meets the labeled tap target guideline', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    await _pumpWord(tester);
+
+    await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+    handle.dispose();
+  });
 }

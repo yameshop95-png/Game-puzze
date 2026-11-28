@@ -2,6 +2,36 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-29 — S2-04: test đã khóa (James)
+
+- PR `test/S2-04` (xếp chồng trên contract):
+  `jigsaw_play_test.dart` thêm nhóm S2-04
+  (WID-JP-29..36: nhãn khay/ô trống ban đầu, nhãn
+  theo vị trí hiện tại + hậu tố selected, kỷ luật
+  announce ở cả hai đường kéo/chạm, announce
+  hoàn thành, semantics-tap chọn/bỏ chọn/đặt +
+  semantics-tap occupant, guideline
+  textContrast + labeledTapTarget cho màn chơi)
+  — hash mới `1c53c62c…`;
+  `word_play_test.dart` thêm WID-WP-13..18 (nhãn
+  chip theo zone/vị trí, container hai zone,
+  notice liveRegion, announce `Puzzle completed`,
+  guideline mode select + labeledTapTarget word)
+  — hash mới `5dd48807…`;
+  `theme_select_test.dart` thêm WID-TS-11
+  (textContrast) — hash mới `014d61d8…`;
+  `completion_screen_test.dart` thêm WID-CP-07
+  (textContrast) — hash mới `5dd786da…`. Cả bốn
+  khóa lại vào `harness/tests.lock` (cập nhật có
+  kiểm soát, verify OK); pre-check `S2-04` OK ở
+  giai đoạn test; analyze sạch.
+- Kiểm chứng đỏ-đúng-lý-do: chạy 4 file test trên
+  code main hiện tại — đỏ đúng 11 ca mới phụ
+  thuộc feat (WID-JP-29..35, WID-WP-13..16); 5 ca
+  guideline (WID-JP-36, WID-WP-17/18, WID-TS-11,
+  WID-CP-07) đã pass ngay theo đúng bằng chứng
+  probe; không ca cũ nào gãy. Golden không đụng.
+
 ## 2026-11-29 — S2-04: mở contract (James)
 
 - `harness/contracts/S2-04.md`: ghi 8 chốt của
