@@ -93,12 +93,25 @@ if [ "$STEP" = "S1-02" ]; then
     echo "FAIL: no UNIT-DB test IDs found in $contract"
     exit 1
   fi
+  # dart format wraps long test names: a line ending in test( is
+  # joined onto the next line before matching, mirroring the
+  # E-step mirror logic below.
+  s_joined=$(mktemp)
+  awk '
+    {
+      if (hold != "") { $0 = hold $0; hold = "" }
+      if ($0 ~ /(^|[^A-Za-z0-9_])(test|testWidgets)\([[:space:]]*$/) { hold = $0; next }
+      print
+    }
+    END { if (hold != "") print hold }' "$s_test" > "$s_joined"
   for id in $s_ids; do
-    if ! grep -qE "^[[:space:]]*(test|testWidgets)\([[:space:]]*['\"]${id}([^0-9]|$)" "$s_test"; then
+    if ! grep -qE "^[[:space:]]*(test|testWidgets)\([[:space:]]*['\"]${id}([^0-9]|$)" "$s_joined"; then
       echo "FAIL: contract test ID $id has no test() declaration in $s_test"
+      rm -f "$s_joined"
       exit 1
     fi
   done
+  rm -f "$s_joined"
   echo "check_e_step: OK for $STEP"
   exit 0
 fi

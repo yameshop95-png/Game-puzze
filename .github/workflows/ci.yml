@@ -39,7 +39,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: "3.38.1"
+          flutter-version: "3.50.1"
       - name: Pub get (when a Flutter project exists)
         run: |
           if [ -f pubspec.yaml ]; then flutter pub get; else echo "no pubspec.yaml yet - skipping"; fi
@@ -96,7 +96,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: "3.38.1"
+          flutter-version: "3.50.1"
       - name: Flutter test with coverage (when a Flutter project exists)
         run: |
           if [ -f pubspec.yaml ]; then flutter test --coverage; else echo "no pubspec.yaml yet - skipping"; fi
@@ -133,7 +133,7 @@ jobs:
         if: steps.itcheck.outputs.present == 'true'
         with:
           channel: stable
-          flutter-version: "3.38.1"
+          flutter-version: "3.50.1"
       - name: Run integration tests on emulator
         if: steps.itcheck.outputs.present == 'true'
         uses: reactivecircus/android-emulator-runner@v2
