@@ -41,7 +41,12 @@ appId: com.paperfox.game_puzzle
 - launchApp
 - assertVisible: "Animals"
 - tapOn: "Animals"
+# S2-01 (SA-WP-1): the theme tap now lands on the mode
+# select screen (which shows the title), so one extra
+# mechanical tap picks Jigsaw; the drag geometry below
+# is unchanged (contract S2-01 §14).
 - assertVisible: "Weaning the Calves"
+- tapOn: "Jigsaw"
 
 # --- Piece 3 (slot 0, tray scroll 0, visible centre 191) -> home row 1, col 0 (191, 580)
 - swipe:

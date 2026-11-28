@@ -40,9 +40,13 @@ precheck_s1() {
   bash tool/check_e_step.sh S1-05
   bash tool/check_e_step.sh S1-06
 }
+precheck_s2() {
+  bash tool/check_e_step.sh S2-01
+}
 case "$SPRINT" in
   E*) gate "E-step pre-checks" precheck_e ;;
   S1) gate "S-step pre-checks" precheck_s1 ;;
+  S2) gate "S-step pre-checks" precheck_s2 ;;
 esac
 if [ -f content/manifest.json ]; then
   gate "content validator" python3 content_pipeline/validate_manifest.py content/manifest.json

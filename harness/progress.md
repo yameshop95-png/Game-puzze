@@ -2,6 +2,87 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-28 — S2-01: code xong, evaluate xanh (James)
+
+- PR `feat/S2-01-word-play`: loader + model thêm
+  `textEnWord`/`textEnAlt` (SA-WP-2/3); schema
+  pipeline thêm `en_word`/`en_alt` vào whitelist
+  của `text`; manifest a1p1 thêm `en_word` (không
+  thêm `en_alt`); `ModeSelectScreen` mới (thumb +
+  title, nút Words disable khi không có en_word);
+  `WordPlayScreen` mới (một cột cuộn, chip nút
+  thật key theo index+vùng, tự kiểm khi hàng đầy,
+  notice `Not quite — try rearranging`, Stopwatch
+  từ initState); shell nối đường vào qua mode
+  select và handler hoàn thành mode `word`
+  (markSolved trước CompletionScreen, Play again
+  dựng màn word mới). Header hai màn mới có
+  `errorBuilder` cho ảnh thumb (contract §14).
+- Kiểm chứng tại máy: `evaluate.sh S2` PASS mọi
+  cổng tất định (pre-check S2-01 OK, content
+  validator PASS, purity PASS, tests lock PASS,
+  analyze PASS, **217/217 test** = 199 cũ + 18
+  mới, engine coverage **92,4%**); `evaluate.sh
+  S1` cũng PASS tương tự — không regress. Cổng
+  integration fail tại máy chỉ vì "No devices
+  are connected" (Đ11 — cổng CI).
+- Golden `word_play.png` sha256 `150c61ba…`
+  (25.783 bytes) đã khóa trong tests.lock; PNG
+  chờ phòng upload qua GitHub web UI lên nhánh
+  test + feat (CI đỏ ở pre-check S2-01 tới khi
+  PNG lên đủ hai nhánh — tiền lệ S1-03).
+
+## 2026-11-28 — S2-01: test đã khóa (James)
+
+- PR `test/S2-01`: `test/features/word_play/word_play_test.dart`
+  (WID-WP-01..11, `5cfa9da6…`),
+  `test/features/app_shell/word_completion_flow_test.dart`
+  (INT-WP-01..03, `1c5a3744…`),
+  `test/data/asset_loader_word_test.dart`
+  (UNIT-AW-01..04, `2a0989c4…`) — khóa vào
+  `harness/tests.lock`.
+- Cập nhật cơ học theo SA-WP-1 (contract §14):
+  INT-CS thêm một chạm "Jigsaw" sau thẻ Animals
+  (`completion_flow_test.dart`, hash mới
+  `20f8cfe8…`) và Maestro
+  `persistence_restart.yaml` thêm `tapOn: "Jigsaw"`
+  (hash mới `31d78ef2…`) — ID/kịch bản/assert khác
+  không đổi, khóa hash lại.
+- Golden `test/goldens/word_play.png`: sinh tại
+  máy khi nhánh feat có màn hình, hash khóa bổ
+  sung vào tests.lock trên nhánh test ngay sau
+  đó; PNG đi đường GitHub web UI (không qua
+  connector) như tiền lệ S1-03.
+
+## 2026-11-28 — S2-01: mở contract (James)
+
+- `harness/contracts/S2-01.md`: ghi 9 chốt của
+  Opus (comment `7238524214`, SA-WP-1..SA-WP-9,
+  chốt theo khuyến nghị ở cổng `7238401523`) —
+  ModeSelectScreen sau khi chạm chủ đề (nút Words
+  disable khi không có `text.en_word`), field
+  `text.en_word` + `text.en_alt` vào
+  schema/model/loader, tự kiểm tra khi hàng đáp
+  án đầy (notice `Not quite — try rearranging`,
+  không highlight từng token, không nút reset),
+  chip hiện `WordToken.text` nguyên văn, một cột
+  cuộn dọc (header thumb gọn → "Your sentence" →
+  dòng trạng thái → "Word bank"), Stopwatch từ
+  initState + CompletionScreen dùng lại +
+  markSolved mode `word`, test WID-WP/INT-WP/
+  UNIT-AW + golden `word_play.png`, Semantics
+  chi tiết để S2-04.
+- Khối pre-check `S2-01` trong
+  `tool/check_e_step.sh` + `precheck_s2`/nhánh
+  `S2` trong `tool/evaluate.sh`. Ở giai đoạn
+  contract, pre-check S2-01 fail đúng lý do đầu
+  tiên (màn word chưa tồn tại) — test viết ở
+  nhánh test xếp chồng tiếp theo.
+- Phụ lục contract ghi hai cập nhật cơ học ép
+  buộc bởi SA-WP-1 (INT-CS + Maestro thêm một
+  chạm "Jigsaw", làm ở nhánh test, khóa hash
+  lại) và cách hiểu SA-WP-8 về file INT-CS.
+
 ## 2026-11-28 — S1-06: test đã khóa, sửa tràn chữ đã xong (James)
 
 - PR `test/S1-06`: `integration_test/perf_test.dart`

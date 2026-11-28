@@ -8,6 +8,8 @@ import 'data/app_database.dart';
 import 'data/progress_dao.dart';
 import 'features/completion/completion_screen.dart';
 import 'features/jigsaw_play/jigsaw_play_screen.dart';
+import 'features/mode_select/mode_select_screen.dart';
+import 'features/word_play/word_play_screen.dart';
 import 'features/theme_select/theme_progress.dart';
 import 'features/theme_select/theme_select_screen.dart';
 import 'services/asset_loader.dart';
@@ -24,10 +26,11 @@ Random? _seededRng() => _gameSeed == null ? null : Random(_gameSeed);
 
 /// The app shell (contract S1-04 §5): a [MaterialApp]
 /// whose home is the theme select screen, wired so
-/// tapping a theme opens that theme's first level-1
-/// puzzle — or an empty screen when the theme has no
-/// content yet. Wiring lives here, not in the screens
-/// (contract S1-03 SA-UI-4).
+/// tapping a theme opens the mode select screen for
+/// that theme's first level-1 puzzle (S2-01,
+/// SA-WP-1) — or an empty screen when the theme has
+/// no content yet. Wiring lives here, not in the
+/// screens (contract S1-03 SA-UI-4).
 ///
 /// S1-05 (SA-S5-5): the shell owns ONE [ProgressDao]
 /// for the app's whole life — the theme provider reads
@@ -108,14 +111,45 @@ Future<void> _openPuzzle(
   final tolerance = await _snapToleranceRatio();
   if (!context.mounted) return;
   final asset = found;
+  if (asset == null) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const JigsawEmptyScreen()));
+    return;
+  }
+  // S2-01 (SA-WP-1): a theme tap now lands on the mode
+  // select screen; the chosen mode pushes its play
+  // screen on top of it.
   Navigator.of(context).push(
     MaterialPageRoute<void>(
-      builder: (_) => asset == null
-          ? const JigsawEmptyScreen()
-          : _playScreen(context, dao, asset, tolerance),
+      builder: (_) => ModeSelectScreen(
+        asset: asset,
+        image: _thumbImage(asset),
+        onJigsawSelected: () {
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => _playScreen(context, dao, asset, tolerance),
+            ),
+          );
+        },
+        onWordsSelected: () {
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => _wordScreen(context, dao, asset),
+            ),
+          );
+        },
+      ),
     ),
   );
 }
+
+/// The thumb provider the mode select header and the
+/// word play header share (contract S2-01 §2): the
+/// asset's thumb path under the same `content/` prefix
+/// as the play image (S1-01 §4).
+ImageProvider _thumbImage(PuzzleAsset asset) =>
+    ResizeImage(AssetImage('content/${asset.thumbPath}'), width: 600);
 
 /// Builds a play screen for [asset] with the shell's
 /// completion wiring (used for the first open and for
@@ -174,6 +208,63 @@ Future<void> _onPuzzleCompleted(
           Navigator.of(context).pushReplacement(
             MaterialPageRoute<void>(
               builder: (_) => _playScreen(context, dao, asset, tolerance),
+            ),
+          );
+        },
+      ),
+    ),
+  );
+}
+
+/// Builds a word play screen for [asset] with the
+/// shell's completion wiring (contract S2-01 §2/§8).
+WordPlayScreen _wordScreen(
+  BuildContext context,
+  ProgressDao dao,
+  PuzzleAsset asset,
+) {
+  return WordPlayScreen(
+    asset: asset,
+    image: _thumbImage(asset),
+    rng: _seededRng(),
+    onCompleted: (elapsed) => _onWordCompleted(context, dao, asset, elapsed),
+  );
+}
+
+/// Word completion wiring (contract S2-01 §8,
+/// SA-WP-7): the mirror of the jigsaw handler with
+/// mode `word` — record the solve first, then show
+/// the completion screen, even when the write fails.
+/// Play again pushes a fresh word play screen for
+/// the same asset. Best keeps the S1-05 precedent:
+/// the just-written time, no real DB query.
+Future<void> _onWordCompleted(
+  BuildContext context,
+  ProgressDao dao,
+  PuzzleAsset asset,
+  Duration elapsed,
+) async {
+  try {
+    await dao.markSolved(
+      asset.id,
+      ProgressModes.word,
+      solvedAt: DateTime.now(),
+      timeSeconds: elapsed.inSeconds,
+    );
+  } catch (e) {
+    debugPrint('markSolved failed for ${asset.id}: $e');
+  }
+  if (!context.mounted) return;
+  Navigator.of(context).pushReplacement(
+    MaterialPageRoute<void>(
+      builder: (_) => CompletionScreen(
+        puzzleName: asset.title.isNotEmpty ? asset.title : asset.theme,
+        elapsed: elapsed,
+        bestSeconds: elapsed.inSeconds,
+        onPlayAgain: () {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute<void>(
+              builder: (_) => _wordScreen(context, dao, asset),
             ),
           );
         },
