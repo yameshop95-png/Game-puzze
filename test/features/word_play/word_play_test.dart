@@ -637,4 +637,17 @@ void main() {
     await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
     handle.dispose();
   });
+
+  // Contract S2-04a: there is deliberately NO
+  // textContrastGuideline test for this screen.
+  // The placeholder fix (Colors.grey → grey.shade700)
+  // removed the one real violation (≈2.7); the
+  // guideline then failed only on a token chip,
+  // which probe evidence shows is a histogram
+  // sampling artifact of the checker, not a real
+  // violation (true ratio ≈ 6.2 ≥ 4.5). Opus ruled
+  // Hướng B (verdict 7242884665): the WID-WP-19
+  // test was withdrawn rather than bending the
+  // chip design around a tool limitation. Full
+  // evidence: harness/contracts/S2-04a.md §6.
 }
