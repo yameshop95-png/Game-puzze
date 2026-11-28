@@ -35,6 +35,7 @@ precheck_e() {
 precheck_s1() {
   bash tool/check_e_step.sh S1-01
   bash tool/check_e_step.sh S1-02
+  bash tool/check_e_step.sh S1-03
 }
 case "$SPRINT" in
   E*) gate "E-step pre-checks" precheck_e ;;
