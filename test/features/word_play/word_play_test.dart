@@ -123,7 +123,7 @@ Future<void> _pumpWord(
         asset: asset,
         image: image!,
         rng: Random(42),
-        onCompleted: completions == null ? null : completions.add,
+        onCompleted: completions?.add,
       ),
     ),
   );
@@ -357,7 +357,7 @@ void main() {
   testWidgets(
     'WID-WP-10 mode select shows both modes, navigates to each play screen and disables Words without a word sentence',
     (tester) async {
-      final image = await tester.runAsync(_testImage);
+      final image = (await tester.runAsync(_testImage))!;
 
       // Words path.
       await tester.pumpWidget(
@@ -365,7 +365,7 @@ void main() {
           home: Builder(
             builder: (context) => ModeSelectScreen(
               asset: _asset,
-              image: image!,
+              image: image,
               onJigsawSelected: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => JigsawPlayScreen(asset: _asset, image: image),
@@ -389,31 +389,17 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(WordPlayScreen), findsOneWidget);
 
-      // Jigsaw path, fresh tree.
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Builder(
-            builder: (context) => ModeSelectScreen(
-              asset: _asset,
-              image: image,
-              onJigsawSelected: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => JigsawPlayScreen(asset: _asset, image: image),
-                ),
-              ),
-              onWordsSelected: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => WordPlayScreen(asset: _asset, image: image),
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
+      // Back to the mode select, then the Jigsaw path.
+      // (Re-pumping a new MaterialApp would NOT reset the
+      // navigator stack, so the routes are popped for real.)
+      await tester.pageBack();
       await tester.pumpAndSettle();
+      expect(find.byType(ModeSelectScreen), findsOneWidget);
       await tester.tap(find.text('Jigsaw'));
       await tester.pumpAndSettle();
       expect(find.byType(JigsawPlayScreen), findsOneWidget);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
 
       // No word sentence: Words is disabled.
       await tester.pumpWidget(

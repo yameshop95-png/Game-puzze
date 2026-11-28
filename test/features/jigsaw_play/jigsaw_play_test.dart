@@ -21,6 +21,7 @@ import 'package:game_puzzle/engine/jigsaw/board.dart';
 import 'package:game_puzzle/engine/jigsaw/tray_order.dart';
 import 'package:game_puzzle/features/jigsaw_play/jigsaw_board_painter.dart';
 import 'package:game_puzzle/features/jigsaw_play/jigsaw_play_screen.dart';
+import 'package:game_puzzle/features/mode_select/mode_select_screen.dart';
 import 'package:game_puzzle/features/theme_select/theme_progress.dart';
 import 'package:game_puzzle/services/asset_loader.dart';
 
@@ -407,6 +408,14 @@ void main() {
         await tester.pumpAndSettle();
 
         await tester.tap(find.text('Animals'));
+        await tester.pumpAndSettle();
+
+        // S2-01 (SA-WP-1) mechanical update, contract
+        // S2-01 §14: the theme tap now lands on the mode
+        // select screen first — one extra tap on
+        // 'Jigsaw'; the final assertion is unchanged.
+        expect(find.byType(ModeSelectScreen), findsOneWidget);
+        await tester.tap(find.text('Jigsaw'));
         await tester.pumpAndSettle();
 
         expect(find.byType(JigsawPlayScreen), findsOneWidget);
