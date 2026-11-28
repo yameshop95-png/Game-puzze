@@ -366,7 +366,11 @@ void main() {
             builder: (context) => ModeSelectScreen(
               asset: _asset,
               image: image,
-              onJigsawSelected: () => Navigator.of(context).push(
+              // S2-03 mechanical update (contract
+              // S2-03 §9): onJigsawSelected now carries
+              // the grid size (SA-J3-1); this case
+              // ignores it, assertions unchanged.
+              onJigsawSelected: (gridSize) => Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => JigsawPlayScreen(asset: _asset, image: image),
                 ),
@@ -407,7 +411,7 @@ void main() {
           home: ModeSelectScreen(
             asset: _noWordAsset,
             image: image,
-            onJigsawSelected: () {},
+            onJigsawSelected: (_) {},
             onWordsSelected: () {},
           ),
         ),
@@ -434,13 +438,56 @@ void main() {
           ModeSelectScreen(
             asset: _asset,
             image: image!,
-            onJigsawSelected: () {},
+            onJigsawSelected: (_) {},
             onWordsSelected: () {},
           ),
         ),
       );
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'WID-WP-12 mode select reports the chosen grid size, defaulting to 3',
+    (tester) async {
+      final image = (await tester.runAsync(_testImage))!;
+      int? received;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ModeSelectScreen(
+            asset: _asset,
+            image: image,
+            onJigsawSelected: (gridSize) => received = gridSize,
+            onWordsSelected: () {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Grid size'), findsOneWidget);
+      expect(find.text('3×3'), findsOneWidget);
+      expect(find.text('4×4'), findsOneWidget);
+      expect(find.text('6×6'), findsOneWidget);
+
+      // SA-J3-1/J3-3: the screen always opens at
+      // the 3x3 default — tapping Jigsaw without
+      // touching the chips reports 3.
+      await tester.tap(find.text('Jigsaw'));
+      await tester.pumpAndSettle();
+      expect(received, 3);
+
+      await tester.tap(find.text('6×6'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Jigsaw'));
+      await tester.pumpAndSettle();
+      expect(received, 6);
+
+      await tester.tap(find.text('4×4'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Jigsaw'));
+      await tester.pumpAndSettle();
+      expect(received, 4);
     },
   );
 }

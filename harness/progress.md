@@ -2,6 +2,30 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-28 — S2-03: test đã khóa (James)
+
+- PR `test/S2-03`: `test/features/jigsaw_play/jigsaw_play_test.dart`
+  tổng quát hoá helper theo gridSize (mặc định 3,
+  ca cũ không đổi hành vi) + thêm nhóm S2-03
+  (WID-JP-23..28: số mảnh/khay ở 4×4 và 6×6, kéo
+  1 mảnh về home ở 6×6, chạm-chọn-chạm-đặt ở
+  6×6, hoàn thành trọn 4×4, cỡ chữ 200% ở 6×6)
+  — hash mới `48856354…`;
+  `integration_test/perf_test.dart` tổng quát hoá
+  helper theo `(gridSize, pieceCount)` + PERF-03
+  (6×6, trace kéo 20 mảnh đầu về home, cùng
+  reportKey `timeline`) — hash mới `907d956f…`;
+  `test/features/word_play/word_play_test.dart`
+  thêm WID-WP-12 (wiring chọn cỡ ở ModeSelect:
+  mặc định 3, chip 6×6 → 6, chip 4×4 → 4) và sửa
+  cơ học hai closure của WID-WP-10/11 cho chữ ký
+  callback mới (khẳng định không đổi) — hash mới
+  `669b7b2f…`. Cả ba khóa vào `harness/tests.lock`;
+  pre-check `S2-03` OK ở giai đoạn test (verify
+  tests lock OK). Bộ test tham chiếu chữ ký
+  ModeSelect mới chưa tồn tại — đỏ biên dịch cho
+  tới nhánh feat (đúng quy trình test-viết-trước).
+
 ## 2026-11-28 — S2-03: mở contract (James)
 
 - `harness/contracts/S2-03.md`: ghi 6 chốt của
