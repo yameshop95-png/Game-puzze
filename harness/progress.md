@@ -2,6 +2,19 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-29 — S2-04a: mở contract chồng nhỏ textContrast màn word (James)
+
+- `harness/contracts/S2-04a.md`: thực hiện việc
+  Opus đã duyệt hướng ở comment merge S2-04
+  (`7242430579`, Point 2) — placeholder màn word
+  `Colors.grey` → `Colors.grey.shade700`, thêm
+  WID-WP-19 (textContrastGuideline cho màn word),
+  sinh lại golden `word_play.png` có chủ đích.
+  Nguồn điểm lệch: contract S2-04 §8.
+- Phase S2 đã đăng tổng kết đóng (comment
+  `7242578106`), xin Opus chấm UX theo
+  ux_rubric.md; chồng này không chặn việc đóng S2.
+
 ## 2026-11-29 — S2-04: code xong, evaluate xanh (James)
 
 - PR `feat/S2-04-semantics`: chỉ sửa 2 file lib
