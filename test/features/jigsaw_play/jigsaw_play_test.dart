@@ -47,8 +47,6 @@ void _useEmulatorSurface(WidgetTester tester) {
 double _boardSide(WidgetTester tester) =>
     tester.view.physicalSize.width / tester.view.devicePixelRatio - 32;
 
-double _cell(WidgetTester tester) => _cellFor(tester, 3);
-
 /// Cell size for an arbitrary grid (contract S2-03:
 /// the helpers are generalised by gridSize with the
 /// 3x3 forms kept as defaults, so the locked cases
@@ -82,9 +80,6 @@ Offset _slotCenterFor(WidgetTester tester, int slot, int gridSize) {
   final cell = _cellFor(tester, gridSize);
   return Offset(16 + cell * (slot + 0.5) - _trayScroll, _trayCenterY(tester));
 }
-
-double _scrollForSlot(WidgetTester tester, int slot) =>
-    _scrollForSlotFor(tester, slot, 3);
 
 double _scrollForSlotFor(WidgetTester tester, int slot, int gridSize) {
   final contentCenter = 16 + _cellFor(tester, gridSize) * (slot + 0.5);
@@ -780,7 +775,7 @@ void main() {
         );
         await tester.runAsync(() async {
           await precacheImage(
-            image,
+            image!,
             tester.element(find.byType(JigsawPlayScreen)),
           );
         });
