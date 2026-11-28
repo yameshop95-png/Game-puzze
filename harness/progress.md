@@ -2,6 +2,66 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-28 — S2-03: code xong, evaluate xanh (James)
+
+- PR `feat/S2-03-grid-sizes`: chỉ sửa 2 file lib
+  theo SA-J3-1. `mode_select_screen.dart`:
+  ModeSelect thành StatefulWidget giữ
+  `int _gridSize = 3`; dưới title là nhãn "Grid
+  size" + hàng chip ChoiceChip "3×3 / 4×4 / 6×6"
+  (Wrap căn giữa — một hàng khi đủ chỗ, tự xuống
+  dòng ở cỡ chữ 200% thay vì tràn); nút Jigsaw
+  gọi `onJigsawSelected(_gridSize)` với chữ ký
+  mới `void Function(int gridSize)`, Words giữ
+  `VoidCallback` và bỏ qua cỡ lưới. `app.dart`:
+  hàm `_startJigsaw(context, dao, asset,
+  tolerance, gs)` đẩy màn chơi với
+  `gridSize: gs`; `_playScreen` /
+  `_onPuzzleCompleted` mang theo `gridSize` nên
+  Play again dựng lại đúng cỡ đã chọn, không
+  reset về 3. Engine/schema/hình học không đổi
+  (SA-J3-2/3/5).
+- **Ghi chú SA-J3-2 (tiến độ theo cỡ lưới):**
+  khóa DB `(image_id, mode)` giữ nguyên — giải
+  một hình ở bất kỳ cỡ nào cũng là MỘT dòng,
+  `best_time` là min chung mọi cỡ; S3-04 đếm sự
+  tồn tại của dòng cho cổng 75%, không đếm theo
+  cỡ. Nếu S3+ cần leaderboard theo cỡ thì làm
+  migration riêng lúc đó.
+- **Cổng còn CHỜ:** perf máy thật cấu hình thấp
+  của Paul (SA-J3-4 + SA-S6-1) — số emulator của
+  PERF-03 là indicative, S2-03 không tự đóng
+  cổng máy thật; mục meminfo/PSS của §6 cũng là
+  việc máy thật, còn treo.
+- Kiểm chứng tại máy: `evaluate.sh S2` PASS mọi
+  cổng local (pre-check S2-01 + S2-02 + S2-03 OK,
+  content validator PASS, purity PASS, tests
+  lock PASS, analyze PASS, **234/234 test** =
+  227 cũ + WID-JP-23..28 + WID-WP-12, engine
+  coverage **92,4%**); `evaluate.sh S1` cũng PASS
+  tương tự — không regress. Cổng integration
+  fail tại máy chỉ vì "No devices are connected"
+  (cổng CI — PERF-03 chạy ở android-it trên CI).
+  Diff `test/` + `integration_test/` +
+  `tests.lock` giữa nhánh test và feat: rỗng.
+  (Nhánh feat remote được tạo trước commit sửa
+  analyze trên nhánh test nên bản push feat mang
+  kèm đúng hai file đó — jigsaw_play_test.dart +
+  tests.lock — với nội dung khớp từng byte nhánh
+  test đã cập nhật; cây của hai nhánh không lệch.)
+
+## 2026-11-28 — S2-03: sửa analyze trên nhánh test (James)
+
+- Commit bổ sung trên `test/S2-03` (sau khi khóa
+  lần đầu): bỏ hai delegate 3×3 không còn được
+  dùng (`_cell`, `_scrollForSlot` — bản tổng quát
+  đã thay thế, analyze báo unused_element) và
+  thêm `!` cho lời gọi precache trong WID-JP-28.
+  Không ca test nào đổi khẳng định; hash của
+  `jigsaw_play_test.dart` khóa lại thành
+  `d01d6f95…`, pre-check S2-03 + verify tests
+  lock vẫn OK.
+
 ## 2026-11-28 — S2-03: test đã khóa (James)
 
 - PR `test/S2-03`: `test/features/jigsaw_play/jigsaw_play_test.dart`
