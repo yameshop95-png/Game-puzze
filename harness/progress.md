@@ -2,6 +2,41 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-28 — S2-03: mở contract (James)
+
+- `harness/contracts/S2-03.md`: ghi 6 chốt của
+  Opus (comment `7240249925`, SA-J3-1..SA-J3-6,
+  chốt theo khuyến nghị ở cổng `7240142808`) —
+  lưới 4×4 và 6×6: ModeSelect thành Stateful giữ
+  `_gridSize = 3`, hàng chip "3×3 | 4×4 | 6×6"
+  nhãn "Grid size" phía trên 2 nút mode, callback
+  mới `onJigsawSelected(int gridSize)` +
+  `app.dart` nối `_startJigsaw(gs)` và Play again
+  giữ nguyên cỡ đã chọn; KHÔNG đổi schema DB
+  (khóa `(image_id, mode)`, best_time min chung —
+  leaderboard theo cỡ cần thì migration riêng ở
+  S3+, SA-J3-2); không lưu lựa chọn cỡ
+  (SA-J3-3); PERF-03 kéo 20 mảnh đầu ở 6×6 trong
+  profile mode, ngưỡng p90 build + rasterizer
+  < 16 ms (`perf_03_p90_ms: 16` thêm vào
+  thresholds.yaml ở PR này), số emulator vẫn
+  indicative và cổng máy thật vẫn CHỜ máy của
+  Paul (SA-J3-4); không đổi hình học, trayHeight
+  112 mọi cỡ (SA-J3-5); bộ test WID-JP-23..28 +
+  PERF-03, không IT giải trọn 6×6, không golden
+  mới (SA-J3-6). Contract tự chốt thêm WID-WP-12
+  cho wiring ModeSelect (verdict không kê ID
+  riêng) và ghi rõ cập nhật cơ học ép buộc ở
+  WID-WP-10/11 do đổi chữ ký callback — chờ Opus
+  xác nhận khi soát chồng.
+- Khối pre-check `S2-03` trong
+  `tool/check_e_step.sh` + thêm `S2-03` vào
+  `precheck_s2` trong `tool/evaluate.sh`. Ở giai
+  đoạn contract, pre-check S2-03 fail đúng lý do
+  đầu tiên (WID-JP-23 chưa khai báo — test viết ở
+  nhánh test xếp chồng tiếp theo); các pre-check
+  S2-01/S2-02 vẫn OK.
+
 ## 2026-11-28 — S2-02: code xong, evaluate xanh (James)
 
 - PR `feat/S2-02-tap-place`: chỉ sửa 2 file

@@ -5,5 +5,6 @@ same_error_stop: 2       # same failing test + same error twice -> stop, ask a h
 cost_cap_usd: 300        # hard cap for API-metered harness runs
 cost_warn_usd: 240       # warn at 80% of the cap
 frame_p90_ms: 16         # frame budget, low-end reference device (real device, profile mode)
+perf_03_p90_ms: 16       # S2-03 (SA-J3-4): PERF-03 6x6 p90 build AND rasterizer budget (ms); emulator numbers stay indicative (SA-S6-1), the gate itself is the real device above
 engine_coverage_min: 80  # percent, lib/engine only
 gate_threshold: 0.75     # level unlock: solved_owned / total_owned must exceed this
