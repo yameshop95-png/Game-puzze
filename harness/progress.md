@@ -2,6 +2,44 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-28 — S1-06: mở contract (James)
+
+- `harness/contracts/S1-06.md`: ghi 8 chốt của
+  Opus (comment `7236919665`, SA-S6-1..SA-S6-8,
+  chốt theo khuyến nghị ở cổng `7236776816`) —
+  cổng emulator perf ghi nhãn **indicative**,
+  cổng máy thật p90 < 16 ms giữ trạng thái **CHỜ
+  (máy của Paul)** trong progress (xem mục dưới);
+  kịch bản perf 3×3 trên puzzle thật `a1p1`
+  (traceAction bao dãy kéo–đặt 9 mảnh + cuộn
+  khay, helper IT-J; 6×6 để S2-03); mẫu driver
+  duy nhất `traceAction(reportKey: 'timeline')`
+  + `integrationDriver` xuất
+  `build/*timeline_summary.json`; chỉ số phụ
+  chạm → ảnh chỉ ghi, không cổng; test cỡ chữ
+  WID-FS-01..03 cho cả 3 màn ở 320×568 dp +
+  TextScaler 2.0; prefix PERF + pre-check S1-06;
+  chấm UX đóng S1 không nằm trong chồng này
+  (SA-S6-7, việc sau merge).
+- Diff `ci.yml` của SA-S6-3 (step `flutter drive
+  --profile` riêng sau bước integration test,
+  `continue-on-error`, artifact timeline) ghi
+  nguyên văn trong contract §5 — connector không
+  đẩy được workflows nên phòng áp qua GitHub web
+  UI lên nhánh feat sau khi đăng chồng (tiền lệ
+  fix KVM của S1-04).
+- Cùng PR: khối pre-check `S1-06` trong
+  `tool/check_e_step.sh` + thêm vào `precheck_s1`
+  của `tool/evaluate.sh`.
+- Kiểm chứng tại máy: pre-check S1-06 fail đúng
+  lý do đầu tiên (`integration_test/perf_test.dart`
+  chưa có); S1-01..05 vẫn OK.
+- **Cổng perf máy thật (SA-S6-1): CHỜ** — chờ
+  Paul cung cấp máy Android cấu hình thấp chuẩn
+  (model sẽ ghi vào `harness/thresholds.yaml`).
+  S1-06 không tự đóng cổng này; số emulator là
+  indicative, không thay thế.
+
 ## 2026-11-28 — S1-05: test đã khóa, completion đã code (James)
 
 - PR `test/S1-05`: `completion_screen_test.dart`
