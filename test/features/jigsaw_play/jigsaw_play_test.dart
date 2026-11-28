@@ -47,10 +47,18 @@ void _useEmulatorSurface(WidgetTester tester) {
 double _boardSide(WidgetTester tester) =>
     tester.view.physicalSize.width / tester.view.devicePixelRatio - 32;
 
-double _cell(WidgetTester tester) => _boardSide(tester) / 3;
+/// Cell size for an arbitrary grid (contract S2-03:
+/// the helpers are generalised by gridSize with the
+/// 3x3 forms kept as defaults, so the locked cases
+/// above/below do not change behaviour).
+double _cellFor(WidgetTester tester, int gridSize) =>
+    _boardSide(tester) / gridSize;
 
-Offset _cellCenter(WidgetTester tester, int row, int col) {
-  final cell = _cell(tester);
+Offset _cellCenter(WidgetTester tester, int row, int col) =>
+    _cellCenterFor(tester, row, col, 3);
+
+Offset _cellCenterFor(WidgetTester tester, int row, int col, int gridSize) {
+  final cell = _cellFor(tester, gridSize);
   return Offset(16 + cell * (col + 0.5), 56 + cell * (row + 0.5));
 }
 
@@ -65,22 +73,33 @@ double _trayScroll = 0;
 
 double _trayCenterY(WidgetTester tester) => 56 + _boardSide(tester) + 8 + 56;
 
-Offset _slotCenter(WidgetTester tester, int slot) {
-  final cell = _cell(tester);
+Offset _slotCenter(WidgetTester tester, int slot) =>
+    _slotCenterFor(tester, slot, 3);
+
+Offset _slotCenterFor(WidgetTester tester, int slot, int gridSize) {
+  final cell = _cellFor(tester, gridSize);
   return Offset(16 + cell * (slot + 0.5) - _trayScroll, _trayCenterY(tester));
 }
 
-double _scrollForSlot(WidgetTester tester, int slot) {
-  final contentCenter = 16 + _cell(tester) * (slot + 0.5);
-  final maxScroll = _cell(tester) * 9 - _boardSide(tester);
+double _scrollForSlotFor(WidgetTester tester, int slot, int gridSize) {
+  final contentCenter = 16 + _cellFor(tester, gridSize) * (slot + 0.5);
+  final maxScroll =
+      _cellFor(tester, gridSize) * gridSize * gridSize - _boardSide(tester);
   final desired = contentCenter - (16 + _boardSide(tester) / 2);
   return desired.clamp(0.0, maxScroll);
 }
 
 /// Scrolls the tray strip (a horizontal tray drag that
 /// is not a long-press pickup) until [slot] is centred.
-Future<void> _scrollTrayTo(WidgetTester tester, int slot) async {
-  final target = _scrollForSlot(tester, slot);
+Future<void> _scrollTrayTo(WidgetTester tester, int slot) =>
+    _scrollTrayToFor(tester, slot, 3);
+
+Future<void> _scrollTrayToFor(
+  WidgetTester tester,
+  int slot,
+  int gridSize,
+) async {
+  final target = _scrollForSlotFor(tester, slot, gridSize);
   final delta = target - _trayScroll;
   if (delta == 0) return;
   final gesture = await tester.startGesture(
@@ -125,6 +144,14 @@ Future<MemoryImage> _testImage() async {
 Future<void> _pumpPlay(
   WidgetTester tester, {
   void Function(Duration)? onCompleted,
+}) => _pumpPlayGrid(tester, onCompleted: onCompleted);
+
+/// _pumpPlay at an explicit grid size (contract
+/// S2-03); gridSize 3 is exactly the old behaviour.
+Future<void> _pumpPlayGrid(
+  WidgetTester tester, {
+  int gridSize = 3,
+  void Function(Duration)? onCompleted,
 }) async {
   _trayScroll = 0;
   final image = await tester.runAsync(_testImage);
@@ -134,6 +161,7 @@ Future<void> _pumpPlay(
         asset: _asset,
         image: image!,
         rng: Random(42),
+        gridSize: gridSize,
         onCompleted: onCompleted,
       ),
     ),
@@ -145,6 +173,16 @@ Future<void> _pumpPlay(
   await tester.pump();
 }
 
+/// Sets the 320x568 dp surface of the text-scale
+/// cases (contract S2-03 WID-JP-28, the WID-FS
+/// pattern in test/features/text_scale).
+void _useSmallSurface(WidgetTester tester) {
+  tester.view.physicalSize = const Size(320, 568);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+}
+
 JigsawBoardPainter _painter(WidgetTester tester) {
   final paint = tester.widget<CustomPaint>(
     find.byKey(const ValueKey('jigsaw-board-painter')),
@@ -152,15 +190,27 @@ JigsawBoardPainter _painter(WidgetTester tester) {
   return paint.painter! as JigsawBoardPainter;
 }
 
-List<int> _seededOrder() =>
-    TrayOrder.shuffled(pieceCount: 9, rng: Random(42)).order;
+List<int> _seededOrder() => _seededOrderFor(9);
+
+List<int> _seededOrderFor(int pieceCount) =>
+    TrayOrder.shuffled(pieceCount: pieceCount, rng: Random(42)).order;
 
 /// Long-press drag out of the tray (contract §9): scroll
 /// the slot into view, hold past the long-press timeout,
 /// then move and release.
-Future<void> _dragFromTray(WidgetTester tester, int slot, Offset to) async {
-  await _scrollTrayTo(tester, slot);
-  final gesture = await tester.startGesture(_slotCenter(tester, slot));
+Future<void> _dragFromTray(WidgetTester tester, int slot, Offset to) =>
+    _dragFromTrayFor(tester, slot, to, 3);
+
+Future<void> _dragFromTrayFor(
+  WidgetTester tester,
+  int slot,
+  Offset to,
+  int gridSize,
+) async {
+  await _scrollTrayToFor(tester, slot, gridSize);
+  final gesture = await tester.startGesture(
+    _slotCenterFor(tester, slot, gridSize),
+  );
   await tester.pump(const Duration(milliseconds: 600));
   await gesture.moveTo(to);
   await tester.pump();
@@ -188,22 +238,34 @@ Future<void> _tapAt(WidgetTester tester, Offset pos) async {
 /// Selects a tray piece by tapping it (contract
 /// S2-02): scroll its slot into view first, then tap
 /// its visible centre.
-Future<void> _tapTraySlot(WidgetTester tester, int slot) async {
-  await _scrollTrayTo(tester, slot);
-  await _tapAt(tester, _slotCenter(tester, slot));
+Future<void> _tapTraySlot(WidgetTester tester, int slot) =>
+    _tapTraySlotFor(tester, slot, 3);
+
+Future<void> _tapTraySlotFor(
+  WidgetTester tester,
+  int slot,
+  int gridSize,
+) async {
+  await _scrollTrayToFor(tester, slot, gridSize);
+  await _tapAt(tester, _slotCenterFor(tester, slot, gridSize));
 }
 
-Future<void> _placeHome(
+Future<void> _placeHome(WidgetTester tester, int pieceId, List<int> order) =>
+    _placeHomeFor(tester, pieceId, order, 3);
+
+Future<void> _placeHomeFor(
   WidgetTester tester,
   int pieceId,
   List<int> order,
+  int gridSize,
 ) async {
   final board = _painter(tester).board;
   final home = board.homeOf(pieceId);
-  await _dragFromTray(
+  await _dragFromTrayFor(
     tester,
     order.indexOf(pieceId),
-    _cellCenter(tester, home.row, home.col),
+    _cellCenterFor(tester, home.row, home.col, gridSize),
+    gridSize,
   );
 }
 
@@ -608,6 +670,119 @@ void main() {
         expect(_painter(tester).board.isHome(0), isTrue);
         expect(_painter(tester).board.isComplete, isTrue);
         expect(completions, 1);
+      },
+    );
+  });
+
+  group('JigsawPlayScreen grid sizes S2-03', () {
+    testWidgets('WID-JP-23 gridSize 4 builds a 16-piece board and tray', (
+      tester,
+    ) async {
+      _useEmulatorSurface(tester);
+      await _pumpPlayGrid(tester, gridSize: 4);
+
+      final painter = _painter(tester);
+      expect(painter.board.totalPieces, 16);
+      expect(painter.trayOrder.order.length, 16);
+      expect(painter.board.placedCount, 0);
+    });
+
+    testWidgets('WID-JP-24 gridSize 6 builds a 36-piece board and tray', (
+      tester,
+    ) async {
+      _useEmulatorSurface(tester);
+      await _pumpPlayGrid(tester, gridSize: 6);
+
+      final painter = _painter(tester);
+      expect(painter.board.totalPieces, 36);
+      expect(painter.trayOrder.order.length, 36);
+      expect(painter.board.placedCount, 0);
+    });
+
+    testWidgets('WID-JP-25 dragging one piece home works at gridSize 6', (
+      tester,
+    ) async {
+      _useEmulatorSurface(tester);
+      await _pumpPlayGrid(tester, gridSize: 6);
+      final order = _seededOrderFor(36);
+      final piece = order.first;
+
+      await _placeHomeFor(tester, piece, order, 6);
+
+      expect(_painter(tester).board.isHome(piece), isTrue);
+      expect(_painter(tester).board.placedCount, 1);
+    });
+
+    testWidgets('WID-JP-26 tap-select and tap-place work at gridSize 6', (
+      tester,
+    ) async {
+      _useEmulatorSurface(tester);
+      await _pumpPlayGrid(tester, gridSize: 6);
+      final order = _seededOrderFor(36);
+      final piece = order.first;
+      final home = _painter(tester).board.homeOf(piece);
+
+      await _tapTraySlotFor(tester, order.indexOf(piece), 6);
+      expect(_painter(tester).selectedPieceId, piece);
+
+      await _tapAt(tester, _cellCenterFor(tester, home.row, home.col, 6));
+      expect(_painter(tester).board.isHome(piece), isTrue);
+      expect(_painter(tester).selectedPieceId, isNull);
+    });
+
+    testWidgets(
+      'WID-JP-27 solving the whole 4x4 board fires onCompleted once',
+      (tester) async {
+        _useEmulatorSurface(tester);
+        var completions = 0;
+        await _pumpPlayGrid(
+          tester,
+          gridSize: 4,
+          onCompleted: (_) => completions++,
+        );
+        final order = _seededOrderFor(16);
+
+        for (var piece = 0; piece < 16; piece++) {
+          await _placeHomeFor(tester, piece, order, 4);
+        }
+        expect(_painter(tester).board.isComplete, isTrue);
+        expect(completions, 1);
+      },
+    );
+
+    testWidgets(
+      'WID-JP-28 gridSize 6 has no layout exception at 200% text on 320x568',
+      (tester) async {
+        _useSmallSurface(tester);
+        _trayScroll = 0;
+        final image = await tester.runAsync(_testImage);
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Builder(
+              builder: (context) => MediaQuery(
+                data: MediaQuery.of(
+                  context,
+                ).copyWith(textScaler: const TextScaler.linear(2.0)),
+                child: JigsawPlayScreen(
+                  asset: _asset,
+                  image: image!,
+                  rng: Random(42),
+                  gridSize: 6,
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.runAsync(() async {
+          await precacheImage(
+            image!,
+            tester.element(find.byType(JigsawPlayScreen)),
+          );
+        });
+        await tester.pump();
+
+        expect(_painter(tester).board.totalPieces, 36);
+        expect(tester.takeException(), isNull);
       },
     );
   });

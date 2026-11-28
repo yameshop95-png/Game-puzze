@@ -1,5 +1,7 @@
 // Contract S1-06 performance tests —
-// harness/contracts/S1-06.md §3/§4/§9. These run
+// harness/contracts/S1-06.md §3/§4/§9, extended
+// by contract S2-03 §5 (PERF-03, the 6x6 re-run
+// MUSE_STEPS §S2-03/§6 settle). These run
 // ONLY on the CI android-it gate (contract S1-04
 // Đ11), driven in profile mode by
 // test_driver/perf_driver.dart (SA-S6-3 step).
@@ -46,15 +48,19 @@ const PuzzleAsset _asset = PuzzleAsset(
 double _boardSide(WidgetTester tester) =>
     tester.view.physicalSize.width / tester.view.devicePixelRatio - 32;
 
-double _cell(WidgetTester tester) => _boardSide(tester) / 3;
+/// Helpers are generalised by gridSize (contract
+/// S2-03 §5, SA-J3-4): the defaults keep PERF-01/02
+/// on the original 3x3 geometry, PERF-03 passes 6.
+double _cell(WidgetTester tester, {int gridSize = 3}) =>
+    _boardSide(tester) / gridSize;
 
-Offset _cellCenter(WidgetTester tester, int row, int col) {
-  final cell = _cell(tester);
+Offset _cellCenter(WidgetTester tester, int row, int col, {int gridSize = 3}) {
+  final cell = _cell(tester, gridSize: gridSize);
   return Offset(16 + cell * (col + 0.5), 56 + cell * (row + 0.5));
 }
 
-Offset _slotCenter(WidgetTester tester, int slot) {
-  final cell = _cell(tester);
+Offset _slotCenter(WidgetTester tester, int slot, {int gridSize = 3}) {
+  final cell = _cell(tester, gridSize: gridSize);
   return Offset(16 + cell * (slot + 0.5) - _trayScroll, _trayCenterY(tester));
 }
 
@@ -69,9 +75,10 @@ double _trayScroll = 0;
 
 double _trayCenterY(WidgetTester tester) => 56 + _boardSide(tester) + 8 + 56;
 
-double _scrollForSlot(WidgetTester tester, int slot) {
-  final contentCenter = 16 + _cell(tester) * (slot + 0.5);
-  final maxScroll = _cell(tester) * 9 - _boardSide(tester);
+double _scrollForSlot(WidgetTester tester, int slot, {int gridSize = 3}) {
+  final cell = _cell(tester, gridSize: gridSize);
+  final contentCenter = 16 + cell * (slot + 0.5);
+  final maxScroll = cell * gridSize * gridSize - _boardSide(tester);
   final desired = contentCenter - (16 + _boardSide(tester) / 2);
   return desired.clamp(0.0, maxScroll);
 }
@@ -80,8 +87,12 @@ double _scrollForSlot(WidgetTester tester, int slot) {
 /// that is not a long-press pickup) until [slot] is
 /// centred — part of the measured scenario
 /// (SA-S6-2: the trace includes the tray scrolls).
-Future<void> _scrollTrayTo(WidgetTester tester, int slot) async {
-  final target = _scrollForSlot(tester, slot);
+Future<void> _scrollTrayTo(
+  WidgetTester tester,
+  int slot, {
+  int gridSize = 3,
+}) async {
+  final target = _scrollForSlot(tester, slot, gridSize: gridSize);
   final delta = target - _trayScroll;
   if (delta == 0) return;
   final gesture = await tester.startGesture(
@@ -97,6 +108,7 @@ Future<void> _scrollTrayTo(WidgetTester tester, int slot) async {
 Future<void> _pumpPlay(
   WidgetTester tester, {
   void Function(Duration)? onCompleted,
+  int gridSize = 3,
 }) async {
   _trayScroll = 0;
   await tester.pumpWidget(
@@ -108,6 +120,7 @@ Future<void> _pumpPlay(
           width: 1080,
         ),
         rng: Random(42),
+        gridSize: gridSize,
         onCompleted: onCompleted,
       ),
     ),
@@ -136,9 +149,16 @@ Future<void> _waitForImage(WidgetTester tester) async {
 /// Long-press drag out of the tray (contract
 /// S1-04 §9): scroll the slot into view, hold past
 /// the long-press timeout, then move and release.
-Future<void> _dragFromTray(WidgetTester tester, int slot, Offset to) async {
-  await _scrollTrayTo(tester, slot);
-  final gesture = await tester.startGesture(_slotCenter(tester, slot));
+Future<void> _dragFromTray(
+  WidgetTester tester,
+  int slot,
+  Offset to, {
+  int gridSize = 3,
+}) async {
+  await _scrollTrayTo(tester, slot, gridSize: gridSize);
+  final gesture = await tester.startGesture(
+    _slotCenter(tester, slot, gridSize: gridSize),
+  );
   await tester.pump(const Duration(milliseconds: 600));
   await gesture.moveTo(to);
   await tester.pump();
@@ -149,14 +169,16 @@ Future<void> _dragFromTray(WidgetTester tester, int slot, Offset to) async {
 Future<void> _placeHome(
   WidgetTester tester,
   int pieceId,
-  List<int> order,
-) async {
+  List<int> order, {
+  int gridSize = 3,
+}) async {
   final board = _painter(tester).board;
   final home = board.homeOf(pieceId);
   await _dragFromTray(
     tester,
     order.indexOf(pieceId),
-    _cellCenter(tester, home.row, home.col),
+    _cellCenter(tester, home.row, home.col, gridSize: gridSize),
+    gridSize: gridSize,
   );
 }
 
@@ -216,6 +238,45 @@ void main() {
       // only — no threshold is asserted here.
       expect(_painter(tester).board.isComplete, isTrue);
       expect(completions, 1);
+    });
+
+    testWidgets('PERF-03 traced drag of the first 20 pieces at gridSize 6', (
+      tester,
+    ) async {
+      // Contract S2-03 §5 (SA-J3-4): the §6
+      // scenario re-run at 6x6 — pump the play
+      // screen at gridSize 6 with the real a1p1
+      // content and trace dragging the FIRST 20
+      // pieces (tray order indices 0..19) to
+      // their home cells. Not a full 36-piece
+      // solve. The budget (p90 build AND
+      // rasterizer < 16 ms) is recorded as
+      // perf_03_p90_ms in harness/thresholds.yaml;
+      // as with PERF-02 the numbers are read from
+      // the timeline summary by the driver/CI and
+      // are indicative only (emulator, SA-S6-1) —
+      // no threshold is asserted here. This test
+      // runs after PERF-02 and uses the same
+      // reportKey 'timeline' (the single SA-S6-8
+      // pattern), so the CI artifact's summary is
+      // this 6x6 trace.
+      await _pumpPlay(tester, gridSize: 6);
+      await _waitForImage(tester);
+      expect(_painter(tester).image, isNotNull);
+      final order = _painter(tester).trayOrder.order;
+      expect(order.length, 36);
+
+      await binding.traceAction(() async {
+        for (var i = 0; i < 20; i++) {
+          await _placeHome(tester, order[i], order, gridSize: 6);
+        }
+      }, reportKey: 'timeline');
+
+      final board = _painter(tester).board;
+      expect(board.placedCount, 20);
+      for (var i = 0; i < 20; i++) {
+        expect(board.isHome(order[i]), isTrue);
+      }
     });
   });
 }

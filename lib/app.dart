@@ -125,13 +125,8 @@ Future<void> _openPuzzle(
       builder: (_) => ModeSelectScreen(
         asset: asset,
         image: _thumbImage(asset),
-        onJigsawSelected: () {
-          Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => _playScreen(context, dao, asset, tolerance),
-            ),
-          );
-        },
+        onJigsawSelected: (gs) =>
+            _startJigsaw(context, dao, asset, tolerance, gs),
         onWordsSelected: () {
           Navigator.of(context).push(
             MaterialPageRoute<void>(
@@ -140,6 +135,25 @@ Future<void> _openPuzzle(
           );
         },
       ),
+    ),
+  );
+}
+
+/// Starts a jigsaw game at the grid size chosen on
+/// the mode select screen (contract S2-03 §2,
+/// SA-J3-1): pushes a play screen for [asset] at
+/// [gridSize] on top of the mode select.
+void _startJigsaw(
+  BuildContext context,
+  ProgressDao dao,
+  PuzzleAsset asset,
+  double tolerance,
+  int gridSize,
+) {
+  Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) =>
+          _playScreen(context, dao, asset, tolerance, gridSize: gridSize),
     ),
   );
 }
@@ -155,20 +169,31 @@ ImageProvider _thumbImage(PuzzleAsset asset) =>
 /// completion wiring (used for the first open and for
 /// Play again). The image key prefixes the asset's
 /// content-relative play path (S1-01 §4: paths are
-/// relative to the `content/` directory).
+/// relative to the `content/` directory). [gridSize]
+/// is the size chosen on the mode select screen
+/// (S2-03, SA-J3-1); Play again rebuilds with the
+/// same size, never a reset to 3.
 JigsawPlayScreen _playScreen(
   BuildContext context,
   ProgressDao dao,
   PuzzleAsset asset,
-  double tolerance,
-) {
+  double tolerance, {
+  int gridSize = 3,
+}) {
   return JigsawPlayScreen(
     asset: asset,
     image: ResizeImage(AssetImage('content/${asset.playPath}'), width: 1080),
     rng: _seededRng(),
     snapToleranceRatio: tolerance,
-    onCompleted: (elapsed) =>
-        _onPuzzleCompleted(context, dao, asset, tolerance, elapsed),
+    gridSize: gridSize,
+    onCompleted: (elapsed) => _onPuzzleCompleted(
+      context,
+      dao,
+      asset,
+      tolerance,
+      elapsed,
+      gridSize: gridSize,
+    ),
   );
 }
 
@@ -183,8 +208,9 @@ Future<void> _onPuzzleCompleted(
   ProgressDao dao,
   PuzzleAsset asset,
   double tolerance,
-  Duration elapsed,
-) async {
+  Duration elapsed, {
+  int gridSize = 3,
+}) async {
   try {
     await dao.markSolved(
       asset.id,
@@ -207,7 +233,13 @@ Future<void> _onPuzzleCompleted(
         onPlayAgain: () {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute<void>(
-              builder: (_) => _playScreen(context, dao, asset, tolerance),
+              builder: (_) => _playScreen(
+                context,
+                dao,
+                asset,
+                tolerance,
+                gridSize: gridSize,
+              ),
             ),
           );
         },
