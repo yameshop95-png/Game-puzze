@@ -2,6 +2,38 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-28 — S1-04: mở contract (James)
+
+- `harness/contracts/S1-04.md`: ghi 11 chốt của
+  Opus (comment `7233002927`, chốt 11/11 theo
+  khuyến nghị ở cổng `7232943144`) — ảnh tiêm qua
+  constructor + fixture sinh bằng PictureRecorder,
+  Preview overlay 0.7 + Hint viền vàng 1,2 giây,
+  `onCompleted` đúng một lần rồi khóa kéo (không
+  DB/màn kết thúc — S1-05), app shell `lib/app.dart`
+  + `main.dart` rút gọn, constructor chốt nguyên,
+  ba phản ứng theo PlaceResult, công thức hình học
+  (boardTop 56, trayHeight 112), long-press từ khay,
+  trần gridSize 64 + ENG-J-54, Test ID WID-JP/IT-J
+  và integration là cổng CI android-it (không phải
+  cổng local).
+- Hai điểm suy ra ghi rõ trong contract chờ Opus
+  xác nhận: overlay Preview dùng `Image` với
+  provider đã tiêm (constructor không giữ bytes nên
+  không dùng `Image.memory` như câu chữ Đ2) và
+  `AssetLoader` chưa có `firstAsset` nên `app.dart`
+  tự chọn bản ghi (theme, level 1) đầu tiên từ
+  `load()`; ô khay giữ vị trí theo toàn bộ hoán vị
+  TrayOrder (luật E3).
+- Cùng PR: khối pre-check `S1-04` trong
+  `tool/check_e_step.sh` (ba họ ID WID-JP / IT-J /
+  ENG-J) + `tool/evaluate.sh` chạy thêm khối này
+  trong `precheck_s1`.
+- Kiểm chứng tại máy: pre-check S1-04 fail đúng lý
+  do đầu tiên ở giai đoạn contract
+  (`lib/features/jigsaw_play/` chưa có); S1-01 +
+  S1-02 + S1-03 vẫn OK.
+
 ## 2026-11-28 — S1-03: test đã khóa, ThemeSelect đã code (James)
 
 - PR `test/S1-03`: `theme_select_test.dart` +
