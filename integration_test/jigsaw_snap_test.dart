@@ -4,6 +4,9 @@
 // Geometry follows contract §8 and is computed from the real
 // surface size at runtime. The test image is generated
 // deterministically in memory (contract §2) — no PNG fixture.
+// S1-05 note (SA-S5-4): the _pumpPlay helper's onCompleted
+// type follows the new Duration-carrying signature;
+// assertions unchanged.
 import 'dart:math';
 import 'dart:ui' as ui;
 
@@ -105,7 +108,7 @@ Future<MemoryImage> _testImage() async {
 
 Future<void> _pumpPlay(
   WidgetTester tester, {
-  void Function()? onCompleted,
+  void Function(Duration)? onCompleted,
 }) async {
   _trayScroll = 0;
   final image = await _testImage();
