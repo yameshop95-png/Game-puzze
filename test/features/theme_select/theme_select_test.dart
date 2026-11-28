@@ -24,12 +24,17 @@ class FakeThemeProgressProvider implements ThemeProgressProvider {
   }
 }
 
-ThemeViewModel vm(String id, String name, {bool locked = false}) {
+ThemeViewModel vm(
+  String id,
+  String name, {
+  bool locked = false,
+  int solved = 0,
+}) {
   return ThemeViewModel(
     themeId: id,
     displayName: name,
     puzzleCount: 10,
-    solvedCount: 0,
+    solvedCount: solved,
     nextLevelLocked: locked,
   );
 }
@@ -118,7 +123,32 @@ void main() {
   );
 
   testWidgets(
-    'WID-TS-03 card semantics labels are the theme name, plus ", locked" when locked',
+    'WID-TS-01b a theme with solves shows its solved count text and label',
+    (tester) async {
+      await pumpScreen(
+        tester,
+        FakeThemeProgressProvider(
+          () async => [
+            vm('animals', 'Animals', solved: 1),
+            vm('landscapes', 'Landscapes'),
+            vm('space', 'Space'),
+            vm('maps', 'Maps'),
+            vm('landmarks', 'Landmarks'),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // SA-S5-6: the solved line appears only on the theme
+      // that has solves, and the card label carries it.
+      expect(find.text('1 solved'), findsOneWidget);
+      expect(find.bySemanticsLabel('Animals theme, 1 solved'), findsOneWidget);
+      expect(find.bySemanticsLabel('Space theme'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'WID-TS-03 card semantics labels are the theme name plus " theme", plus ", locked" when locked',
     (tester) async {
       await pumpScreen(
         tester,
@@ -126,12 +156,14 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.bySemanticsLabel('Animals'), findsOneWidget);
-      expect(find.bySemanticsLabel('Landscapes, locked'), findsOneWidget);
+      // SA-S5-6 label format (S1-05): "<Name> theme", with
+      // the SA-UI-7 ", locked" suffix kept after it.
+      expect(find.bySemanticsLabel('Animals theme'), findsOneWidget);
+      expect(find.bySemanticsLabel('Landscapes theme, locked'), findsOneWidget);
       expect(find.bySemanticsLabel('Landscapes'), findsNothing);
-      expect(find.bySemanticsLabel('Space'), findsOneWidget);
-      expect(find.bySemanticsLabel('Maps'), findsOneWidget);
-      expect(find.bySemanticsLabel('Landmarks'), findsOneWidget);
+      expect(find.bySemanticsLabel('Space theme'), findsOneWidget);
+      expect(find.bySemanticsLabel('Maps theme'), findsOneWidget);
+      expect(find.bySemanticsLabel('Landmarks theme'), findsOneWidget);
     },
   );
 

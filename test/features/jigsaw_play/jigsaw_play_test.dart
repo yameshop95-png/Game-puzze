@@ -123,7 +123,7 @@ Future<MemoryImage> _testImage() async {
 
 Future<void> _pumpPlay(
   WidgetTester tester, {
-  void Function()? onCompleted,
+  void Function(Duration)? onCompleted,
 }) async {
   _trayScroll = 0;
   final image = await tester.runAsync(_testImage);
@@ -357,7 +357,16 @@ void main() {
       (tester) async {
         _useEmulatorSurface(tester);
         var completions = 0;
-        await _pumpPlay(tester, onCompleted: () => completions++);
+        Duration? lastElapsed;
+        // S1-05 (contract S1-05 §5, SA-S5-4): onCompleted now
+        // carries the measured Duration.
+        await _pumpPlay(
+          tester,
+          onCompleted: (elapsed) {
+            completions++;
+            lastElapsed = elapsed;
+          },
+        );
         final order = _seededOrder();
 
         for (var piece = 0; piece < 9; piece++) {
@@ -365,6 +374,8 @@ void main() {
         }
         expect(_painter(tester).board.isComplete, isTrue);
         expect(completions, 1);
+        expect(lastElapsed, isNotNull);
+        expect(lastElapsed!.compareTo(Duration.zero) >= 0, isTrue);
 
         // Further dragging is locked (contract §4): piece 0 must
         // stay home and the callback must not fire again.
