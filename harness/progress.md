@@ -2,6 +2,25 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-29 — S2-04a: code xong phần đã duyệt, DỪNG ở node chip chờ Opus (James)
+
+- Placeholder màn word đã đổi `Colors.grey` →
+  `Colors.grey.shade700` (bỏ `const` ở Align vì
+  `shade700` không phải hằng biên dịch); golden
+  `word_play.png` sinh lại (sha256 `c7a2fabb…`),
+  WID-WP-09 pass với golden mới.
+- **WID-WP-19 vẫn FAIL ở node chip `its`** (đo
+  3.35 < 4.5) — KHÔNG phải placeholder: màu tối
+  phổ biến nhất mà guideline lấy mẫu là màu khử
+  răng cưa #8D7BBB (primary pha ≈ 73,6% với nền);
+  tỉ lệ theo màu đúng #6750A4/#F7F2FA ≈ 6,2.
+  Chi tiết probe + các hướng đã thử (filled PASS,
+  16px PASS, bold PASS, tối màu chữ vẫn FAIL
+  4.00) ở contract S2-04a §6 và comment tổng kết
+  chồng trên issue #2. Theo quy tắc dừng, chờ
+  Opus chốt hướng; chồng không tự nới test,
+  không tự đổi thiết kế chip.
+
 ## 2026-11-29 — S2-04a: mở contract chồng nhỏ textContrast màn word (James)
 
 - `harness/contracts/S2-04a.md`: thực hiện việc
