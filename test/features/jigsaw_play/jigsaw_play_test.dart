@@ -53,10 +53,43 @@ Offset _cellCenter(WidgetTester tester, int row, int col) {
   return Offset(16 + cell * (col + 0.5), 56 + cell * (row + 0.5));
 }
 
+/// The tray strip holds 9 slots of one cell each
+/// (contract §8) — wider than the screen — so it
+/// scrolls horizontally (MUSE_STEPS §6, contract §8
+/// clarification). Slot centres in the contract are
+/// CONTENT coordinates; the visible centre subtracts
+/// the current scroll offset, tracked here across the
+/// drags of one test and reset by _pumpPlay.
+double _trayScroll = 0;
+
+double _trayCenterY(WidgetTester tester) => 56 + _boardSide(tester) + 8 + 56;
+
 Offset _slotCenter(WidgetTester tester, int slot) {
   final cell = _cell(tester);
-  final trayTop = 56 + _boardSide(tester) + 8;
-  return Offset(16 + cell * (slot + 0.5), trayTop + 56);
+  return Offset(16 + cell * (slot + 0.5) - _trayScroll, _trayCenterY(tester));
+}
+
+double _scrollForSlot(WidgetTester tester, int slot) {
+  final contentCenter = 16 + _cell(tester) * (slot + 0.5);
+  final maxScroll = _cell(tester) * 9 - _boardSide(tester);
+  final desired = contentCenter - (16 + _boardSide(tester) / 2);
+  return desired.clamp(0.0, maxScroll);
+}
+
+/// Scrolls the tray strip (a horizontal tray drag that
+/// is not a long-press pickup) until [slot] is centred.
+Future<void> _scrollTrayTo(WidgetTester tester, int slot) async {
+  final target = _scrollForSlot(tester, slot);
+  final delta = target - _trayScroll;
+  if (delta == 0) return;
+  final gesture = await tester.startGesture(
+    Offset(16 + _boardSide(tester) / 2, _trayCenterY(tester)),
+  );
+  await gesture.moveBy(Offset(-delta, 0));
+  await tester.pump();
+  await gesture.up();
+  await tester.pump();
+  _trayScroll = target;
 }
 
 /// A deterministic 3x3 image (nine coloured cells), generated
@@ -92,6 +125,7 @@ Future<void> _pumpPlay(
   WidgetTester tester, {
   void Function()? onCompleted,
 }) async {
+  _trayScroll = 0;
   final image = await tester.runAsync(_testImage);
   await tester.pumpWidget(
     MaterialApp(
@@ -120,10 +154,12 @@ JigsawBoardPainter _painter(WidgetTester tester) {
 List<int> _seededOrder() =>
     TrayOrder.shuffled(pieceCount: 9, rng: Random(42)).order;
 
-/// Long-press drag out of the tray (contract §9): hold past
-/// the long-press timeout, then move and release.
-Future<void> _dragFromTray(WidgetTester tester, Offset from, Offset to) async {
-  final gesture = await tester.startGesture(from);
+/// Long-press drag out of the tray (contract §9): scroll
+/// the slot into view, hold past the long-press timeout,
+/// then move and release.
+Future<void> _dragFromTray(WidgetTester tester, int slot, Offset to) async {
+  await _scrollTrayTo(tester, slot);
+  final gesture = await tester.startGesture(_slotCenter(tester, slot));
   await tester.pump(const Duration(milliseconds: 600));
   await gesture.moveTo(to);
   await tester.pump();
@@ -149,7 +185,7 @@ Future<void> _placeHome(
   final home = board.homeOf(pieceId);
   await _dragFromTray(
     tester,
-    _slotCenter(tester, order.indexOf(pieceId)),
+    order.indexOf(pieceId),
     _cellCenter(tester, home.row, home.col),
   );
 }
@@ -179,11 +215,7 @@ void main() {
       final piece = order.first;
       final home = _painter(tester).board.homeOf(piece);
 
-      await _dragFromTray(
-        tester,
-        _slotCenter(tester, 0),
-        _cellCenter(tester, home.row, home.col),
-      );
+      await _dragFromTray(tester, 0, _cellCenter(tester, home.row, home.col));
 
       expect(_painter(tester).board.isHome(piece), isTrue);
     });
@@ -198,7 +230,7 @@ void main() {
 
       // The board's top-left corner is ~0.7 cell units from the
       // nearest cell centre — far outside the 0.2 tolerance.
-      await _dragFromTray(tester, _slotCenter(tester, 0), const Offset(17, 57));
+      await _dragFromTray(tester, 0, const Offset(17, 57));
 
       final board = _painter(tester).board;
       expect(board.isPlaced(piece), isFalse);
@@ -215,11 +247,7 @@ void main() {
       final home = _painter(tester).board.homeOf(piece);
       final wrongRow = (home.row + 1) % 3;
 
-      await _dragFromTray(
-        tester,
-        _slotCenter(tester, 0),
-        _cellCenter(tester, wrongRow, home.col),
-      );
+      await _dragFromTray(tester, 0, _cellCenter(tester, wrongRow, home.col));
 
       final board = _painter(tester).board;
       expect(board.positionOf(piece), CellPos(wrongRow, home.col));
@@ -237,11 +265,7 @@ void main() {
         await _placeHome(tester, first, order);
         final home = _painter(tester).board.homeOf(first);
 
-        await _dragFromTray(
-          tester,
-          _slotCenter(tester, 1),
-          _cellCenter(tester, home.row, home.col),
-        );
+        await _dragFromTray(tester, 1, _cellCenter(tester, home.row, home.col));
 
         final board = _painter(tester).board;
         expect(board.isHome(first), isTrue);
@@ -259,11 +283,7 @@ void main() {
       final piece = order.first;
       final home = _painter(tester).board.homeOf(piece);
       final wrongRow = (home.row + 1) % 3;
-      await _dragFromTray(
-        tester,
-        _slotCenter(tester, 0),
-        _cellCenter(tester, wrongRow, home.col),
-      );
+      await _dragFromTray(tester, 0, _cellCenter(tester, wrongRow, home.col));
       expect(_painter(tester).board.isHome(piece), isFalse);
 
       await _dragOnBoard(
