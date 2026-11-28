@@ -146,7 +146,26 @@ jobs:
         with:
           api-level: 30
           arch: x86_64
-          script: flutter test integration_test
+          script: |
+          flutter test integration_test/jigsaw_snap_test.dart integration_test/completion_event_test.dart
+          - name: Run perf drive on emulator (indicative only, S1-06)
+          if: steps.itcheck.outputs.present == 'true'
+          continue-on-error: true
+          uses: reactivecircus/android-emulator-runner@v2
+          with:
+          api-level: 30
+          arch: x86_64
+          script: |
+          flutter drive --profile --driver=test_driver/perf_driver.dart --target=integration_test/perf_test.dart
+          echo "--- perf timeline summary (indicative, emulator) ---"
+          cat build/*timeline_summary.json || echo "no timeline summary produced"
+    - name: Upload perf timeline summary (indicative, S1-06)
+    if: steps.itcheck.outputs.present == 'true'
+    uses: actions/upload-artifact@v4
+    with:
+    name: perf-timeline-summary
+    path: build/*timeline_summary.json
+    if-no-files-found: ignore
 
 # Maestro E2E flows run locally / on a schedule (see harness/MUSE_STEPS.md 0.5);
 # they are not part of the per-PR CI until a device farm is chosen.
