@@ -787,6 +787,305 @@ void main() {
     );
   });
 
+  group('JigsawPlayScreen semantics S2-04', () {
+    /// The spoken number of a piece is its tray
+    /// position (slot + 1), never its piece id —
+    /// the id would leak the home cell (E3
+    /// decision 3.4, contract S2-04 §3).
+    String trayLabel(int slot) => 'Piece ${slot + 1}, in tray, not placed';
+
+    String cellLabel(int row, int col) =>
+        'Empty cell, row ${row + 1} column ${col + 1}';
+
+    /// Drains and returns the accessibility
+    /// announcements captured so far (contract
+    /// S2-04 §4: sendAnnouncement is read back
+    /// through the test binding).
+    List<String> announcements(WidgetTester tester) => [
+      for (final a in tester.binding.takeAnnouncements()) a.message,
+    ];
+
+    testWidgets(
+      'WID-JP-29 every tray piece and every empty cell has a semantics label',
+      (tester) async {
+        final handle = tester.ensureSemantics();
+        _useEmulatorSurface(tester);
+        await _pumpPlay(tester);
+
+        for (var slot = 0; slot < 9; slot++) {
+          expect(
+            find.bySemanticsLabel(trayLabel(slot)),
+            findsOneWidget,
+            reason: 'tray piece at slot $slot',
+          );
+        }
+        for (var row = 0; row < 3; row++) {
+          for (var col = 0; col < 3; col++) {
+            expect(
+              find.bySemanticsLabel(cellLabel(row, col)),
+              findsOneWidget,
+              reason: 'empty cell $row,$col',
+            );
+          }
+        }
+        handle.dispose();
+      },
+    );
+
+    testWidgets(
+      'WID-JP-30 the piece label follows its current position and state',
+      (tester) async {
+        final handle = tester.ensureSemantics();
+        _useEmulatorSurface(tester);
+        await _pumpPlay(tester);
+        final order = _seededOrder();
+        final piece = order.first;
+        final home = _painter(tester).board.homeOf(piece);
+        final wrongRow = (home.row + 1) % 3;
+        expect(find.bySemanticsLabel(trayLabel(0)), findsOneWidget);
+
+        await _dragFromTray(tester, 0, _cellCenter(tester, wrongRow, home.col));
+        expect(
+          find.bySemanticsLabel(
+            'Piece 1, row ${wrongRow + 1} column ${home.col + 1}, placed',
+          ),
+          findsOneWidget,
+        );
+        expect(find.bySemanticsLabel(trayLabel(0)), findsNothing);
+        // The occupied cell no longer offers an
+        // empty-cell node.
+        expect(
+          find.bySemanticsLabel(cellLabel(wrongRow, home.col)),
+          findsNothing,
+        );
+
+        await _dragOnBoard(
+          tester,
+          _cellCenter(tester, wrongRow, home.col),
+          _cellCenter(tester, home.row, home.col),
+        );
+        expect(
+          find.bySemanticsLabel(
+            'Piece 1, row ${home.row + 1} column ${home.col + 1}, '
+            'placed correctly',
+          ),
+          findsOneWidget,
+        );
+        handle.dispose();
+      },
+    );
+
+    testWidgets('WID-JP-31 the selected piece label gains a selected suffix', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      _useEmulatorSurface(tester);
+      await _pumpPlay(tester);
+      final order = _seededOrder();
+      final piece = order.first;
+      final home = _painter(tester).board.homeOf(piece);
+      final wrongRow = (home.row + 1) % 3;
+
+      await _tapTraySlot(tester, 0);
+      expect(
+        find.bySemanticsLabel('Piece 1, in tray, not placed, selected'),
+        findsOneWidget,
+      );
+      expect(find.bySemanticsLabel(trayLabel(0)), findsNothing);
+
+      await _tapAt(tester, _slotCenter(tester, 0));
+      expect(find.bySemanticsLabel(trayLabel(0)), findsOneWidget);
+
+      // A placed piece carries the suffix too.
+      await _dragFromTray(tester, 0, _cellCenter(tester, wrongRow, home.col));
+      await _tapAt(tester, _cellCenter(tester, wrongRow, home.col));
+      expect(_painter(tester).selectedPieceId, piece);
+      expect(
+        find.bySemanticsLabel(
+          'Piece 1, row ${wrongRow + 1} column ${home.col + 1}, '
+          'placed, selected',
+        ),
+        findsOneWidget,
+      );
+      handle.dispose();
+    });
+
+    testWidgets(
+      'WID-JP-32 announcements fire only on correct placement, on both paths',
+      (tester) async {
+        final handle = tester.ensureSemantics();
+        _useEmulatorSurface(tester);
+        await _pumpPlay(tester);
+        final order = _seededOrder();
+        final first = order[0];
+        final second = order[1];
+        final third = order[2];
+        final homeFirst = _painter(tester).board.homeOf(first);
+        final wrongRow = (homeFirst.row + 1) % 3;
+
+        announcements(tester); // drain anything from the pump
+
+        // A wrong placement (drag) announces nothing.
+        await _dragFromTray(
+          tester,
+          0,
+          _cellCenter(tester, wrongRow, homeFirst.col),
+        );
+        await tester.pump();
+        expect(announcements(tester), isEmpty);
+
+        // Selecting and deselecting announce nothing.
+        await _tapTraySlot(tester, order.indexOf(second));
+        await _tapAt(tester, _slotCenter(tester, order.indexOf(second)));
+        await tester.pump();
+        expect(announcements(tester), isEmpty);
+
+        // A correct placement by drag announces the
+        // piece exactly once.
+        await _placeHome(tester, second, order);
+        await tester.pump();
+        expect(announcements(tester), ['Piece 2 placed correctly']);
+
+        // A correct placement by tap announces the
+        // same way — both paths share the one
+        // resolution point (SA-J4-3).
+        final homeThird = _painter(tester).board.homeOf(third);
+        await _tapTraySlot(tester, order.indexOf(third));
+        await _tapAt(tester, _cellCenter(tester, homeThird.row, homeThird.col));
+        await tester.pump();
+        expect(announcements(tester), ['Piece 3 placed correctly']);
+        handle.dispose();
+      },
+    );
+
+    testWidgets(
+      'WID-JP-33 completing the board announces the piece, then completion',
+      (tester) async {
+        final handle = tester.ensureSemantics();
+        _useEmulatorSurface(tester);
+        var completions = 0;
+        await _pumpPlay(tester, onCompleted: (_) => completions++);
+        final order = _seededOrder();
+
+        for (var piece = 0; piece < 8; piece++) {
+          await _placeHome(tester, piece, order);
+        }
+        announcements(tester); // drain the first eight placements
+        await _placeHome(tester, 8, order);
+        await tester.pump();
+
+        final lastNumber = order.indexOf(8) + 1;
+        expect(announcements(tester), [
+          'Piece $lastNumber placed correctly',
+          'Puzzle completed',
+        ]);
+        expect(_painter(tester).board.isComplete, isTrue);
+        expect(completions, 1);
+        handle.dispose();
+      },
+    );
+
+    testWidgets(
+      'WID-JP-34 semantics taps select, deselect and place a tray piece',
+      (tester) async {
+        final handle = tester.ensureSemantics();
+        _useEmulatorSurface(tester);
+        await _pumpPlay(tester);
+        final order = _seededOrder();
+        final piece = order.first;
+        final home = _painter(tester).board.homeOf(piece);
+
+        // TalkBack path: the double-tap activation
+        // arrives as a semantics tap action on the
+        // piece node (SA-J4-5).
+        tester.semantics.tap(find.semantics.byLabel(trayLabel(0)));
+        await tester.pump();
+        expect(_painter(tester).selectedPieceId, piece);
+        expect(
+          find.bySemanticsLabel('Piece 1, in tray, not placed, selected'),
+          findsOneWidget,
+        );
+
+        // Tapping the selected node again deselects.
+        tester.semantics.tap(
+          find.semantics.byLabel('Piece 1, in tray, not placed, selected'),
+        );
+        await tester.pump();
+        expect(_painter(tester).selectedPieceId, isNull);
+
+        // Select again, then activate the home
+        // cell's empty-cell node to place it.
+        tester.semantics.tap(find.semantics.byLabel(trayLabel(0)));
+        await tester.pump();
+        expect(_painter(tester).selectedPieceId, piece);
+        announcements(tester); // drain
+        tester.semantics.tap(
+          find.semantics.byLabel(cellLabel(home.row, home.col)),
+        );
+        await tester.pump();
+        expect(_painter(tester).board.isHome(piece), isTrue);
+        expect(_painter(tester).selectedPieceId, isNull);
+        expect(announcements(tester), ['Piece 1 placed correctly']);
+        handle.dispose();
+      },
+    );
+
+    testWidgets(
+      'WID-JP-35 a semantics tap on an occupied cell selects its occupant',
+      (tester) async {
+        final handle = tester.ensureSemantics();
+        _useEmulatorSurface(tester);
+        await _pumpPlay(tester);
+        final order = _seededOrder();
+        final first = order[0];
+        final second = order[1];
+        final homeFirst = _painter(tester).board.homeOf(first);
+        final wrongRow = (homeFirst.row + 1) % 3;
+        await _dragFromTray(
+          tester,
+          0,
+          _cellCenter(tester, wrongRow, homeFirst.col),
+        );
+
+        tester.semantics.tap(find.semantics.byLabel(trayLabel(1)));
+        await tester.pump();
+        expect(_painter(tester).selectedPieceId, second);
+
+        // SA-J2-4 through the semantics channel:
+        // the tap acts on the occupant, the board
+        // does not change.
+        tester.semantics.tap(
+          find.semantics.byLabel(
+            'Piece 1, row ${wrongRow + 1} column ${homeFirst.col + 1}, placed',
+          ),
+        );
+        await tester.pump();
+        final painter = _painter(tester);
+        expect(painter.selectedPieceId, first);
+        expect(
+          painter.board.positionOf(first),
+          CellPos(wrongRow, homeFirst.col),
+        );
+        expect(painter.board.isPlaced(second), isFalse);
+        expect(painter.board.placedCount, 1);
+        handle.dispose();
+      },
+    );
+
+    testWidgets(
+      'WID-JP-36 the play screen meets the accessibility guidelines',
+      (tester) async {
+        final handle = tester.ensureSemantics();
+        _useEmulatorSurface(tester);
+        await _pumpPlay(tester);
+
+        await expectLater(tester, meetsGuideline(textContrastGuideline));
+        await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+        handle.dispose();
+      },
+    );
+  });
+
   group('App shell wiring S1-04', () {
     testWidgets(
       'WID-JP-11 tapping a theme with an asset pushes the play screen',

@@ -96,4 +96,12 @@ void main() {
     expect(find.byType(CompletionScreen), findsNothing);
     expect(find.text('Theme root'), findsOneWidget);
   });
+
+  testWidgets('WID-CP-07 meets textContrastGuideline', (tester) async {
+    final handle = tester.ensureSemantics();
+    await _pumpScreen(tester, bestSeconds: 95);
+
+    await expectLater(tester, meetsGuideline(textContrastGuideline));
+    handle.dispose();
+  });
 }
