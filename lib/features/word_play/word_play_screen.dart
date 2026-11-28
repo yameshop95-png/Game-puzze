@@ -212,11 +212,15 @@ class _WordPlayScreenState extends State<WordPlayScreen> {
                     ConstrainedBox(
                       constraints: const BoxConstraints(minHeight: 48),
                       child: answer.isEmpty
-                          ? const Align(
+                          ? Align(
                               alignment: Alignment.centerLeft,
                               child: Text(
                                 'Tap the words below to build your sentence',
-                                style: TextStyle(color: Colors.grey),
+                                // grey.shade700, not Colors.grey:
+                                // the placeholder must meet the
+                                // text contrast guideline
+                                // (contract S2-04a).
+                                style: TextStyle(color: Colors.grey.shade700),
                               ),
                             )
                           : Wrap(
