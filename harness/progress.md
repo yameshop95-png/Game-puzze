@@ -2,6 +2,29 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-28 — S1-03: mở contract (James)
+
+- `harness/contracts/S1-03.md`: ghi nguyên 7 chốt
+  SA-UI-1..7 của Opus (comment `7231445982`) — 5 thẻ
+  chủ đề, khóa = cổng cấp tiếp theo qua gate.dart,
+  catalog cố định theo schema enum, provider tiêm
+  interface + `computeThemeViewModel`, không đụng
+  main.dart, golden phương án (a) với font Roboto từ
+  SDK, Test ID `WID-TS-01..15`.
+- Cùng PR: khối pre-check `S1-03` trong
+  `tool/check_e_step.sh` + `tool/evaluate.sh` chạy
+  thêm khối này; `test/flutter_test_config.dart` nạp
+  Roboto từ Flutter SDK cho golden (SA-UI-5); thư
+  mục `test/goldens/` với file giữ chỗ `.gitkeep`
+  (PNG sinh ở bước test, lên nhánh test qua web UI
+  vì connector không đẩy được binary). Hai file hỗ
+  trợ test tạo ở bước này đã khóa hash vào
+  `harness/tests.lock`.
+- Kiểm chứng tại máy: pre-check S1-03 fail đúng lý
+  do đầu tiên ở giai đoạn contract
+  (`lib/features/theme_select/` chưa có); S1-01 +
+  S1-02 vẫn OK.
+
 ## 2026-11-28 — S1-02: PR #31 đã merge — chồng đã rebase lên main mới, feat đã push + mở PR (James)
 
 - PR `test/S1-02`: `app_database_test.dart`

@@ -115,6 +115,69 @@ if [ "$STEP" = "S1-02" ]; then
   echo "check_e_step: OK for $STEP"
   exit 0
 fi
+# S1-03 branch (contract SA-UI-6): same shape as S1-01/S1-02, for
+# the theme-select feature. Checks:
+#   - lib/features/theme_select/ exists;
+#   - the step's widget test file exists;
+#   - the golden PNG and the test bootstrap exist (SA-UI-5);
+#   - no skipped tests under test/features;
+#   - every WID-TS ID in the contract is declared as test('<ID>...'
+#     or testWidgets('<ID>...' in a *_test.dart under
+#     test/features/theme_select/ (unit + widget files together).
+if [ "$STEP" = "S1-03" ]; then
+  s_dir="test/features/theme_select"
+  s_test="$s_dir/theme_select_test.dart"
+  if [ ! -d lib/features/theme_select ]; then
+    echo "FAIL: lib/features/theme_select/ does not exist"
+    exit 1
+  fi
+  if [ ! -f "$s_test" ]; then
+    echo "FAIL: $s_test does not exist"
+    exit 1
+  fi
+  if [ ! -f test/goldens/theme_select.png ]; then
+    echo "FAIL: test/goldens/theme_select.png does not exist"
+    exit 1
+  fi
+  if [ ! -f test/flutter_test_config.dart ]; then
+    echo "FAIL: test/flutter_test_config.dart does not exist"
+    exit 1
+  fi
+  skip_hits=$( { grep -rnE "skip[[:space:]]*:" test/features | grep -vE "skip[[:space:]]*:[[:space:]]*false([^A-Za-z0-9_]|$)" || true
+                 grep -rnE "@Skip\(|markTestSkipped\(" test/features || true; } )
+  if [ -n "$skip_hits" ]; then
+    echo "FAIL: skipped tests found under test/features:"
+    echo "$skip_hits"
+    exit 1
+  fi
+  s_ids=$(grep -oE "WID-TS-[0-9]+" "$contract" | sort -u)
+  if [ -z "$s_ids" ]; then
+    echo "FAIL: no WID-TS test IDs found in $contract"
+    exit 1
+  fi
+  # Join lines ending in test( / testWidgets( onto the next line
+  # (dart format wraps long names), mirroring the S1-02 block.
+  s_joined=$(mktemp)
+  for f in "$s_dir"/*_test.dart; do
+    awk '
+      {
+        if (hold != "") { $0 = hold $0; hold = "" }
+        if ($0 ~ /(^|[^A-Za-z0-9_])(test|testWidgets)\([[:space:]]*$/) { hold = $0; next }
+        print
+      }
+      END { if (hold != "") print hold }' "$f" >> "$s_joined"
+  done
+  for id in $s_ids; do
+    if ! grep -qE "^[[:space:]]*(test|testWidgets)\([[:space:]]*['\"]${id}([^0-9]|$)" "$s_joined"; then
+      echo "FAIL: contract test ID $id has no test() declaration under $s_dir"
+      rm -f "$s_joined"
+      exit 1
+    fi
+  done
+  rm -f "$s_joined"
+  echo "check_e_step: OK for $STEP"
+  exit 0
+fi
 subdir=""
 case "$STEP" in
   E1) subdir="jigsaw" ;;

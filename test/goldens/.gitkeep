@@ -1,0 +1,5 @@
+Golden PNG files for widget tests live here (contract S1-03, SA-UI-5).
+theme_select.png is generated locally on Linux with
+`flutter test --update-goldens` and committed via the GitHub web UI
+(the connector cannot push binary files). This placeholder keeps the
+directory under version control until the first PNG lands.
