@@ -2,6 +2,87 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-28 — S1-04: test đã khóa, màn chơi đã code (James)
+
+- PR `test/S1-04`: `jigsaw_play_test.dart`
+  (WID-JP-01..12, hash `4928558f…`),
+  `integration_test/jigsaw_snap_test.dart`
+  (IT-J-01..04, `33bf0cd4…`) +
+  `completion_event_test.dart` (IT-J-05..06,
+  `59601599…`), `board_test.dart` thêm ENG-J-54
+  (`d5c216aa…`) — tất cả khóa vào
+  `harness/tests.lock`. Ảnh test sinh tất định bằng
+  PictureRecorder + MemoryImage, không PNG fixture.
+- Nhánh `feat/S1-04-jigsaw-play`:
+  `lib/features/jigsaw_play/` (một `Listener` toàn
+  bảng + máy trạng thái kéo: long-press từ khay,
+  kéo trực tiếp trong bảng, pointer thứ hai bị bỏ
+  qua; `JigsawBoardPainter` vẽ từ MỘT `ui.Image`
+  bằng drawImageRect; Preview overlay 0.7 bằng
+  Listener thô — GestureDetector.onTapDown chỉ bắn
+  sau khi arena phân xử nên không dùng; Hint viền
+  vàng 1,2 giây bằng Timer; `onCompleted` đúng một
+  lần qua `PlaceResult.justCompleted` rồi khóa
+  kéo), `lib/app.dart` (MaterialApp + ThemeSelect
+  nối dây: asset (theme, level 1) đầu tiên →
+  JigsawPlayScreen với ResizeImage, không có →
+  JigsawEmptyScreen; tolerance đọc từ
+  config/game_config.json với `cache: false` —
+  future cache của rootBundle treo khi sang test
+  khác, đã kiểm chứng) + `lib/main.dart` chỉ còn
+  runApp, trần gridSize 64 trong `Board.square`,
+  pubspec khai báo asset config.
+- **Khay cuộn ngang** (làm rõ §8 của contract,
+  commit bổ sung trên PR contract): 9 ô × cạnh ô
+  ≈ 1080dp > màn hình nên khay là dải cuộn ngang
+  đúng §6; kéo ngang trong khay trước long-press
+  thì thành cuộn. Test cuộn ô đích vào giữa khay
+  trước mỗi lần kéo.
+- Kiểm chứng tại máy: `evaluate.sh S1` PASS mọi
+  cổng trừ integration — pre-check S1-01..04 OK,
+  purity PASS, tests lock PASS, analyze PASS,
+  **186/186 test** (173 cũ + WID-JP-01..12 +
+  ENG-J-54), engine coverage **92,4%**. Cổng
+  integration fail tại máy chỉ vì môi trường
+  ("No supported devices connected" — VM không có
+  emulator, project không có platform desktop);
+  theo Đ11 integration là cổng CI `android-it`,
+  kết quả chờ CI của chồng. Diff `test/` +
+  `integration_test/` + tests.lock giữa nhánh test
+  và feat: rỗng.
+
+## 2026-11-28 — S1-04: mở contract (James)
+
+- `harness/contracts/S1-04.md`: ghi 11 chốt của
+  Opus (comment `7233002927`, chốt 11/11 theo
+  khuyến nghị ở cổng `7232943144`) — ảnh tiêm qua
+  constructor + fixture sinh bằng PictureRecorder,
+  Preview overlay 0.7 + Hint viền vàng 1,2 giây,
+  `onCompleted` đúng một lần rồi khóa kéo (không
+  DB/màn kết thúc — S1-05), app shell `lib/app.dart`
+  + `main.dart` rút gọn, constructor chốt nguyên,
+  ba phản ứng theo PlaceResult, công thức hình học
+  (boardTop 56, trayHeight 112), long-press từ khay,
+  trần gridSize 64 + ENG-J-54, Test ID WID-JP/IT-J
+  và integration là cổng CI android-it (không phải
+  cổng local).
+- Hai điểm suy ra ghi rõ trong contract chờ Opus
+  xác nhận: overlay Preview dùng `Image` với
+  provider đã tiêm (constructor không giữ bytes nên
+  không dùng `Image.memory` như câu chữ Đ2) và
+  `AssetLoader` chưa có `firstAsset` nên `app.dart`
+  tự chọn bản ghi (theme, level 1) đầu tiên từ
+  `load()`; ô khay giữ vị trí theo toàn bộ hoán vị
+  TrayOrder (luật E3).
+- Cùng PR: khối pre-check `S1-04` trong
+  `tool/check_e_step.sh` (ba họ ID WID-JP / IT-J /
+  ENG-J) + `tool/evaluate.sh` chạy thêm khối này
+  trong `precheck_s1`.
+- Kiểm chứng tại máy: pre-check S1-04 fail đúng lý
+  do đầu tiên ở giai đoạn contract
+  (`lib/features/jigsaw_play/` chưa có); S1-01 +
+  S1-02 + S1-03 vẫn OK.
+
 ## 2026-11-28 — S1-03: test đã khóa, ThemeSelect đã code (James)
 
 - PR `test/S1-03`: `theme_select_test.dart` +

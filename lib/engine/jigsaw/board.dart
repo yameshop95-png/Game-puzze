@@ -31,10 +31,17 @@ class Board {
       _positions = List<CellPos?>.filled(gridSize * gridSize, null);
 
   /// Creates an N×N board with every piece in the tray.
-  /// Throws [ArgumentError] if [gridSize] < 2.
+  /// Throws [ArgumentError] if [gridSize] < 2 or above the
+  /// cap of 64 settled in contract S1-04 (decision 9) —
+  /// without a cap, Board.square(1000) would allocate a
+  /// million pieces. [Board.fromMap] goes through here,
+  /// so restored boards get the same cap.
   factory Board.square(int gridSize) {
     if (gridSize < 2) {
       throw ArgumentError.value(gridSize, 'gridSize', 'must be at least 2');
+    }
+    if (gridSize > 64) {
+      throw ArgumentError.value(gridSize, 'gridSize', 'must be at most 64');
     }
     return Board._(gridSize);
   }

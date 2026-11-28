@@ -67,6 +67,11 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
+  # The app shell reads its snap tolerance from the game
+  # config (contract S1-04 §6).
+  assets:
+    - config/game_config.json
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

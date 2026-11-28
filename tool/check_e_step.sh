@@ -178,6 +178,93 @@ if [ "$STEP" = "S1-03" ]; then
   echo "check_e_step: OK for $STEP"
   exit 0
 fi
+# S1-04 branch (contract S1-04 §11): same shape as
+# S1-01..03, for the jigsaw play feature. Three test
+# ID families live in three different places:
+#   - WID-JP widget IDs in test/features/jigsaw_play/;
+#   - IT-J integration IDs in integration_test/
+#     (checked as declarations only — running them is
+#     the CI android-it gate, contract S1-04 §11);
+#   - the step's new ENG-J ID in
+#     test/engine/jigsaw/board_test.dart.
+# Checks:
+#   - lib/features/jigsaw_play/ and lib/app.dart exist;
+#   - both integration files and the widget test file
+#     exist;
+#   - no skipped tests under test/features or
+#     integration_test;
+#   - every WID-JP / IT-J / ENG-J ID in the contract
+#     is declared as test('<ID>...' or
+#     testWidgets('<ID>...' in its family's files.
+if [ "$STEP" = "S1-04" ]; then
+  w_dir="test/features/jigsaw_play"
+  w_test="$w_dir/jigsaw_play_test.dart"
+  i_dir="integration_test"
+  i_files="$i_dir/jigsaw_snap_test.dart $i_dir/completion_event_test.dart"
+  e_test="test/engine/jigsaw/board_test.dart"
+  if [ ! -d lib/features/jigsaw_play ]; then
+    echo "FAIL: lib/features/jigsaw_play/ does not exist"
+    exit 1
+  fi
+  if [ ! -f lib/app.dart ]; then
+    echo "FAIL: lib/app.dart does not exist"
+    exit 1
+  fi
+  if [ ! -f "$w_test" ]; then
+    echo "FAIL: $w_test does not exist"
+    exit 1
+  fi
+  for i_file in $i_files; do
+    if [ ! -f "$i_file" ]; then
+      echo "FAIL: $i_file does not exist"
+      exit 1
+    fi
+  done
+  skip_hits=$( { grep -rnE "skip[[:space:]]*:" test/features "$i_dir" | grep -vE "skip[[:space:]]*:[[:space:]]*false([^A-Za-z0-9_]|$)" || true
+                 grep -rnE "@Skip\(|markTestSkipped\(" test/features "$i_dir" || true; } )
+  if [ -n "$skip_hits" ]; then
+    echo "FAIL: skipped tests found under test/features or $i_dir:"
+    echo "$skip_hits"
+    exit 1
+  fi
+  # check_family greps the contract for one ID prefix
+  # and requires every such ID to be declared in the
+  # family's files, joining lines that end in test( /
+  # testWidgets( onto the next line first (dart format
+  # wraps long names), mirroring S1-02/S1-03.
+  check_family() {
+    local prefix="$1" label="$2"; shift 2
+    local ids joined id
+    ids=$(grep -oE "${prefix}-[0-9]+" "$contract" | sort -u)
+    if [ -z "$ids" ]; then
+      echo "FAIL: no $prefix test IDs found in $contract"
+      exit 1
+    fi
+    joined=$(mktemp)
+    for f in "$@"; do
+      awk '
+        {
+          if (hold != "") { $0 = hold $0; hold = "" }
+          if ($0 ~ /(^|[^A-Za-z0-9_])(test|testWidgets)\([[:space:]]*$/) { hold = $0; next }
+          print
+        }
+        END { if (hold != "") print hold }' "$f" >> "$joined"
+    done
+    for id in $ids; do
+      if ! grep -qE "^[[:space:]]*(test|testWidgets)\([[:space:]]*['\"]${id}([^0-9]|$)" "$joined"; then
+        echo "FAIL: contract test ID $id has no test() declaration in $label"
+        rm -f "$joined"
+        exit 1
+      fi
+    done
+    rm -f "$joined"
+  }
+  check_family "WID-JP" "$w_dir" "$w_dir"/*_test.dart
+  check_family "IT-J" "$i_dir" "$i_dir"/*_test.dart
+  check_family "ENG-J" "$e_test" "$e_test"
+  echo "check_e_step: OK for $STEP"
+  exit 0
+fi
 subdir=""
 case "$STEP" in
   E1) subdir="jigsaw" ;;

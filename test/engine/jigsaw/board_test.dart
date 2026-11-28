@@ -303,5 +303,14 @@ void main() {
         throwsArgumentError,
       );
     });
+
+    // Contract S1-04 §10 (decision 9): the upper bound that
+    // E1/E2 left open, settled at the S1-04 design gate.
+    test('ENG-J-54 gridSize is capped at 64', () {
+      final board = Board.square(64);
+      expect(board.gridSize, 64);
+      expect(board.totalPieces, 4096);
+      expect(() => Board.square(65), throwsArgumentError);
+    });
   });
 }
