@@ -2,6 +2,88 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-28 — S1-02: PR #31 đã merge — chồng đã rebase lên main mới, feat đã push + mở PR (James)
+
+- PR `test/S1-02`: `app_database_test.dart`
+  (UNIT-DB-01..16), khóa hash vào `harness/tests.lock`
+  (hash cuối `7390897e…` sau khi gõ
+  `Map<String, dynamic>` ở UNIT-DB-16 cho
+  strict_raw_types).
+- Nhánh `feat/S1-02-drift-dao`: `lib/data/app_database.dart` (bảng Progress
+  PK (image_id, mode) + Settings key–value,
+  schemaVersion 1, `AppDatabase.production()` qua
+  drift_flutter) + `lib/data/progress_dao.dart`
+  (ProgressModes + ProgressDao: markSolved upsert,
+  isSolved, solvedIds, get/setSetting) + file `.g.dart`
+  sinh bằng build_runner --force-jit +
+  `drift_schemas/drift_schema_v1.json`. Gói nâng nền:
+  `.fvmrc` 3.50.1, `drift_dev: ^2.35.3` trong pubspec,
+  lock sinh lại trên SDK 3.50.1, analysis_options nhận
+  bản exclude tool tự nâng cấp + dòng suppress
+  `deprecated_member_use: ignore`.
+- Điều chỉnh SA-DB-7 theo verdict CI của PR #31
+  (comment 7229591289): BỎ mục đổi import
+  `lib/main.dart` — material_ui không có trong
+  pubspec nên import đó làm analyzer nổ; giữ
+  material.dart + suppress deprecation trong
+  analysis_options (Hướng B của phòng).
+- PR #31 đã merge vào main (commit `8bb45251`,
+  comment 7231057960, CI 4/4 xanh): ci.yml 3.50.1,
+  suppress có sẵn trên main, Gradle 9.5.0 / AGP
+  9.3.1 / Kotlin 2.4.20. Cả chồng S1-02 đã rebase
+  lên main mới (xung đột duy nhất ở
+  analysis_options.yaml — bản feat thắng vì là
+  superset: giữ nguyên suppress của main + comment
+  giải thích + exclude của tool; feat không đụng
+  android/, lib/main.dart, .github/).
+- Kiểm chứng tại máy SAU rebase:
+  `bash tool/evaluate.sh S1` XANH TOÀN BỘ —
+  pre-check S1-01 + S1-02 OK, purity PASS, tests
+  lock PASS, analyze PASS, **158/158 test pass**
+  (142 test cũ + UNIT-DB-01..16), engine coverage
+  92,4% (365/395). `bash tool/evaluate.sh E6` cũng
+  XANH TOÀN BỘ — không hồi quy cổng cũ. Hash
+  app_database_test.dart sau rebase không đổi:
+  `7390897e…`.
+- Diff `test/` + `harness/tests.lock` giữa
+  `test/S1-02` và nhánh feat sau rebase: rỗng.
+- Còn treo: chờ Opus duyệt cả chồng S1-02 (gồm 2
+  điểm suy ra trong contract: luật null best_time
+  §5.1; solvedIds tăng dần + settings trong
+  ProgressDao §5.2) → Claude merge.
+
+## 2026-11-28 — S1-02: mở contract lưu tiến độ drift (James)
+
+- S1-02 (lưu tiến độ bằng drift): James dừng ở cổng
+  contract (comment 7228829524); Paul chốt Hướng B —
+  nâng Flutter lên 3.50.1 thay vì hạ drift (comment
+  7228865069); James kiểm chứng Hướng B đầu-cuối tại
+  máy (comment 7229079307: drift_dev 2.35.3 resolve
+  sạch trên SDK mới, 142/142 test pass, analyze chỉ đỏ
+  1 dòng deprecation ở lib/main.dart). Opus chốt
+  SA-DB-1..7 (comment 7229335986): PK (image_id, mode)
+  + best_time nullable int giây; mode hằng chuỗi
+  'jigsaw'/'word' trong file DAO; settings key–value;
+  markSolved upsert giữ solved_at lần đầu + best_time
+  = min; production mở qua drift_flutter
+  (game_puzzle.sqlite), test qua NativeDatabase file;
+  schemaVersion = 1 + dump schema tại S1-02 + Test ID
+  UNIT-DB-01..; đổi import material.dart →
+  material_ui trong feat PR.
+- PR docs/s1-02-contract (PR này): contract S1-02 +
+  mở rộng pre-check S1-02 trong tool/check_e_step.sh +
+  khối S1 trong tool/evaluate.sh chạy thêm S1-02, và
+  dòng progress này.
+- Cổng cứng: 3 chỗ flutter-version trong
+  .github/workflows/ci.yml phải sửa qua GitHub web UI
+  (3.38.1 → 3.50.1) TRƯỚC khi push nhánh feat của
+  chồng S1-02; contract + test PR mở bình thường ngay.
+- Còn treo: chờ Opus duyệt contract → James viết test
+  UNIT-DB-01..16 (PR test/S1-02) → code feat; hai điểm
+  suy ra chờ Opus xác nhận khi soát (luật null của
+  best_time §5.1, thứ tự solvedIds + settings nằm
+  trong ProgressDao §5.2).
+
 ## 2026-11-28 — S1-01: test đã khóa, AssetLoader đã code (James)
 
 - PR `test/S1-01`: `asset_loader_test.dart` (UNIT-AL-01..12)

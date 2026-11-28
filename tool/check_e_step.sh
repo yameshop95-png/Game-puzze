@@ -62,6 +62,59 @@ if [ "$STEP" = "S1-01" ]; then
   echo "check_e_step: OK for $STEP"
   exit 0
 fi
+# S1-02 branch (contract SA-DB-6): same shape as S1-01, for the
+# drift data layer. Checks:
+#   - the step's test file and both lib files exist;
+#   - no skipped tests in the step's test directory;
+#   - every UNIT-DB ID in the contract is declared as test('<ID>...'
+#     in the step's test file.
+if [ "$STEP" = "S1-02" ]; then
+  s_test="test/data/app_database_test.dart"
+  s_libs="lib/data/app_database.dart lib/data/progress_dao.dart"
+  if [ ! -f "$s_test" ]; then
+    echo "FAIL: $s_test does not exist"
+    exit 1
+  fi
+  for s_lib in $s_libs; do
+    if [ ! -f "$s_lib" ]; then
+      echo "FAIL: $s_lib does not exist"
+      exit 1
+    fi
+  done
+  skip_hits=$( { grep -rnE "skip[[:space:]]*:" test/data | grep -vE "skip[[:space:]]*:[[:space:]]*false([^A-Za-z0-9_]|$)" || true
+                 grep -rnE "@Skip\(|markTestSkipped\(" test/data || true; } )
+  if [ -n "$skip_hits" ]; then
+    echo "FAIL: skipped tests found under test/data:"
+    echo "$skip_hits"
+    exit 1
+  fi
+  s_ids=$(grep -oE "UNIT-DB-[0-9]+" "$contract" | sort -u)
+  if [ -z "$s_ids" ]; then
+    echo "FAIL: no UNIT-DB test IDs found in $contract"
+    exit 1
+  fi
+  # dart format wraps long test names: a line ending in test( is
+  # joined onto the next line before matching, mirroring the
+  # E-step mirror logic below.
+  s_joined=$(mktemp)
+  awk '
+    {
+      if (hold != "") { $0 = hold $0; hold = "" }
+      if ($0 ~ /(^|[^A-Za-z0-9_])(test|testWidgets)\([[:space:]]*$/) { hold = $0; next }
+      print
+    }
+    END { if (hold != "") print hold }' "$s_test" > "$s_joined"
+  for id in $s_ids; do
+    if ! grep -qE "^[[:space:]]*(test|testWidgets)\([[:space:]]*['\"]${id}([^0-9]|$)" "$s_joined"; then
+      echo "FAIL: contract test ID $id has no test() declaration in $s_test"
+      rm -f "$s_joined"
+      exit 1
+    fi
+  done
+  rm -f "$s_joined"
+  echo "check_e_step: OK for $STEP"
+  exit 0
+fi
 subdir=""
 case "$STEP" in
   E1) subdir="jigsaw" ;;
