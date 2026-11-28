@@ -2,6 +2,35 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-28 — S2-01: mở contract (James)
+
+- `harness/contracts/S2-01.md`: ghi 9 chốt của
+  Opus (comment `7238524214`, SA-WP-1..SA-WP-9,
+  chốt theo khuyến nghị ở cổng `7238401523`) —
+  ModeSelectScreen sau khi chạm chủ đề (nút Words
+  disable khi không có `text.en_word`), field
+  `text.en_word` + `text.en_alt` vào
+  schema/model/loader, tự kiểm tra khi hàng đáp
+  án đầy (notice `Not quite — try rearranging`,
+  không highlight từng token, không nút reset),
+  chip hiện `WordToken.text` nguyên văn, một cột
+  cuộn dọc (header thumb gọn → "Your sentence" →
+  dòng trạng thái → "Word bank"), Stopwatch từ
+  initState + CompletionScreen dùng lại +
+  markSolved mode `word`, test WID-WP/INT-WP/
+  UNIT-AW + golden `word_play.png`, Semantics
+  chi tiết để S2-04.
+- Khối pre-check `S2-01` trong
+  `tool/check_e_step.sh` + `precheck_s2`/nhánh
+  `S2` trong `tool/evaluate.sh`. Ở giai đoạn
+  contract, pre-check S2-01 fail đúng lý do đầu
+  tiên (màn word chưa tồn tại) — test viết ở
+  nhánh test xếp chồng tiếp theo.
+- Phụ lục contract ghi hai cập nhật cơ học ép
+  buộc bởi SA-WP-1 (INT-CS + Maestro thêm một
+  chạm "Jigsaw", làm ở nhánh test, khóa hash
+  lại) và cách hiểu SA-WP-8 về file INT-CS.
+
 ## 2026-11-28 — S1-06: test đã khóa, sửa tràn chữ đã xong (James)
 
 - PR `test/S1-06`: `integration_test/perf_test.dart`

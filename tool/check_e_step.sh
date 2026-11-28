@@ -415,6 +415,94 @@ if [ "$STEP" = "S1-06" ]; then
   echo "check_e_step: OK for $STEP"
   exit 0
 fi
+# S2-01 branch (contract S2-01 §9, SA-WP-8): same
+# shape as S1-05/S1-06, for the word play screen.
+# Checks:
+#   - both new lib screens exist;
+#   - the widget test, the app-shell flow test and
+#     the loader word test exist;
+#   - the golden PNG exists (SA-WP-8; the PNG
+#     travels via the GitHub web UI, S1-03
+#     precedent);
+#   - no skipped tests under test/features/word_play,
+#     test/features/app_shell or test/data;
+#   - every WID-WP ID in the contract is declared
+#     in the widget test, every INT-WP ID in the
+#     flow test and every UNIT-AW ID in the loader
+#     word test.
+if [ "$STEP" = "S2-01" ]; then
+  w_dir="test/features/word_play"
+  w_test="$w_dir/word_play_test.dart"
+  a_test="test/features/app_shell/word_completion_flow_test.dart"
+  l_test="test/data/asset_loader_word_test.dart"
+  if [ ! -f lib/features/word_play/word_play_screen.dart ]; then
+    echo "FAIL: lib/features/word_play/word_play_screen.dart does not exist"
+    exit 1
+  fi
+  if [ ! -f lib/features/mode_select/mode_select_screen.dart ]; then
+    echo "FAIL: lib/features/mode_select/mode_select_screen.dart does not exist"
+    exit 1
+  fi
+  if [ ! -f "$w_test" ]; then
+    echo "FAIL: $w_test does not exist"
+    exit 1
+  fi
+  if [ ! -f "$a_test" ]; then
+    echo "FAIL: $a_test does not exist"
+    exit 1
+  fi
+  if [ ! -f "$l_test" ]; then
+    echo "FAIL: $l_test does not exist"
+    exit 1
+  fi
+  if [ ! -f test/goldens/word_play.png ]; then
+    echo "FAIL: test/goldens/word_play.png does not exist"
+    exit 1
+  fi
+  skip_hits=$( { grep -rnE "skip[[:space:]]*:" "$w_dir" test/features/app_shell test/data | grep -vE "skip[[:space:]]*:[[:space:]]*false([^A-Za-z0-9_]|$)" || true
+                 grep -rnE "@Skip\(|markTestSkipped\(" "$w_dir" test/features/app_shell test/data || true; } )
+  if [ -n "$skip_hits" ]; then
+    echo "FAIL: skipped tests found under $w_dir, test/features/app_shell or test/data:"
+    echo "$skip_hits"
+    exit 1
+  fi
+  # check_ids mirrors the S1-05/S1-06 blocks: grep
+  # the contract for one ID prefix and require
+  # every such ID to be declared in the given
+  # file, joining lines that end in test( /
+  # testWidgets( onto the next line first (dart
+  # format wraps long names).
+  check_ids() {
+    local prefix="$1" file="$2"
+    local ids joined id
+    ids=$(grep -oE "${prefix}-[0-9]+" "$contract" | sort -u)
+    if [ -z "$ids" ]; then
+      echo "FAIL: no $prefix test IDs found in $contract"
+      exit 1
+    fi
+    joined=$(mktemp)
+    awk '
+      {
+        if (hold != "") { $0 = hold $0; hold = "" }
+        if ($0 ~ /(^|[^A-Za-z0-9_])(test|testWidgets)\([[:space:]]*$/) { hold = $0; next }
+        print
+      }
+      END { if (hold != "") print hold }' "$file" > "$joined"
+    for id in $ids; do
+      if ! grep -qE "^[[:space:]]*(test|testWidgets)\([[:space:]]*['\"]${id}([^0-9]|$)" "$joined"; then
+        echo "FAIL: contract test ID $id has no test() declaration in $file"
+        rm -f "$joined"
+        exit 1
+      fi
+    done
+    rm -f "$joined"
+  }
+  check_ids "WID-WP" "$w_test"
+  check_ids "INT-WP" "$a_test"
+  check_ids "UNIT-AW" "$l_test"
+  echo "check_e_step: OK for $STEP"
+  exit 0
+fi
 subdir=""
 case "$STEP" in
   E1) subdir="jigsaw" ;;
