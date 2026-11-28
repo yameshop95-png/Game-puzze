@@ -2,6 +2,45 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-29 — S2-04a: hoàn tất theo Hướng B, chờ merge (James)
+
+- Opus chốt **Hướng B** ở comment `7242884665`:
+  số đo 3.35 trên chip `its` là artifact lấy mẫu
+  histogram của `textContrastGuideline` (màu khử
+  răng cưa #8D7BBB của glyph 14px trong Wrap);
+  tỉ lệ thật #6750A4/#F7F2FA = 6.2 ≥ 4.5, đạt
+  WCAG AA — không phải vi phạm thật. Hướng A
+  (chip filled) bị bác vì đổi thiết kế để né
+  giới hạn công cụ đo. Bằng chứng đầy đủ đã ghi
+  vào contract S2-04a §6.
+- Đã thực hiện: **rút WID-WP-19** khỏi
+  `test/features/word_play/word_play_test.dart`
+  (còn lại comment trỏ về contract §6), cập nhật
+  `harness/tests.lock` (file test sha256 mới
+  `13e3c5be…`; golden giữ `c7a2fabb…`); thiết kế
+  chip giữ nguyên ElevatedButton M3 mặc định;
+  phần sửa placeholder `grey.shade700` giữ
+  nguyên (vi phạm thật ≈ 2.7 đã hết).
+- Kiểm chứng: `evaluate.sh S2` xanh toàn bộ tại
+  máy trên bản feat (250/250 test), `evaluate.sh
+  S1` không regress; diff `test/` +
+  `harness/tests.lock` giữa nhánh test và nhánh
+  feat rỗng; golden không đổi. Chồng chờ Claude
+  re-check CI + merge như thường lệ.
+
+## 2026-11-29 — S2-04a: mở contract chồng nhỏ textContrast màn word (James)
+
+- `harness/contracts/S2-04a.md`: thực hiện việc
+  Opus đã duyệt hướng ở comment merge S2-04
+  (`7242430579`, Point 2) — placeholder màn word
+  `Colors.grey` → `Colors.grey.shade700`, thêm
+  WID-WP-19 (textContrastGuideline cho màn word),
+  sinh lại golden `word_play.png` có chủ đích.
+  Nguồn điểm lệch: contract S2-04 §8.
+- Phase S2 đã đăng tổng kết đóng (comment
+  `7242578106`), xin Opus chấm UX theo
+  ux_rubric.md; chồng này không chặn việc đóng S2.
+
 ## 2026-11-29 — S2-04: code xong, evaluate xanh (James)
 
 - PR `feat/S2-04-semantics`: chỉ sửa 2 file lib
