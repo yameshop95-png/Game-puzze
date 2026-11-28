@@ -2,6 +2,34 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-28 — S2-02: mở contract (James)
+
+- `harness/contracts/S2-02.md`: ghi 10 chốt của
+  Opus (comment `7239396699`, SA-J2-1..SA-J2-10,
+  chốt theo khuyến nghị ở cổng `7239258618`, một
+  làm rõ: ca IT-J-08 bắt buộc) — chạm-chọn-chạm-đặt
+  cho màn chơi: toggle chọn ở khay + trạng thái
+  `selectedPieceId` qua painter, mảnh board cũng
+  chọn/di chuyển bằng chạm (ngưỡng 18 dp), ô đích
+  là ô chứa điểm chạm (không dùng `snapTarget`),
+  không đường về khay, chạm luôn tác động lên vật
+  bị chạm (đường chạm không sinh
+  `rejectedOccupied`), cuộn giữ chọn + long-press
+  giữ nguyên, hai đường cùng tồn tại với hàm
+  resolve chung và 3 điểm dọn chọn, viền chọn
+  3 px `0xFF1565C0`, chỉ sửa 2 file jigsaw_play
+  (không constructor/engine/`app.dart` mới), bộ
+  test WID-JP-13..22 + IT-J-07/08 với định nghĩa
+  "không kéo" = không cử chỉ kéo nào áp lên mảnh,
+  Semantics để S2-04.
+- Khối pre-check `S2-02` trong
+  `tool/check_e_step.sh` + thêm `S2-02` vào
+  `precheck_s2` trong `tool/evaluate.sh`. Ở giai
+  đoạn contract, pre-check S2-02 fail đúng lý do
+  đầu tiên (file integration
+  `jigsaw_tap_place_test.dart` chưa tồn tại) —
+  test viết ở nhánh test xếp chồng tiếp theo.
+
 ## 2026-11-28 — S2-01: code xong, evaluate xanh (James)
 
 - PR `feat/S2-01-word-play`: loader + model thêm
