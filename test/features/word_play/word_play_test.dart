@@ -637,4 +637,21 @@ void main() {
     await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
     handle.dispose();
   });
+
+  // Contract S2-04a: the word screen's empty-row
+  // placeholder was Colors.grey (≈2.7 < 4.5), the
+  // one textContrast failure deferred from S2-04
+  // (contract S2-04 §8, approved in the S2-04 merge
+  // verdict 7242430579). The placeholder is now
+  // grey.shade700, so the word screen meets the
+  // text contrast guideline like the other four.
+  testWidgets('WID-WP-19 word play meets the text contrast guideline', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    await _pumpWord(tester);
+
+    await expectLater(tester, meetsGuideline(textContrastGuideline));
+    handle.dispose();
+  });
 }
