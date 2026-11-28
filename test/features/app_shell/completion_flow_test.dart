@@ -24,6 +24,7 @@ import 'package:game_puzzle/data/app_database.dart';
 import 'package:game_puzzle/data/progress_dao.dart';
 import 'package:game_puzzle/features/completion/completion_screen.dart';
 import 'package:game_puzzle/features/jigsaw_play/jigsaw_board_painter.dart';
+import 'package:game_puzzle/features/mode_select/mode_select_screen.dart';
 import 'package:game_puzzle/features/jigsaw_play/jigsaw_play_screen.dart';
 import 'package:game_puzzle/services/asset_loader.dart';
 
@@ -199,9 +200,15 @@ Future<void> _pumpApp(WidgetTester tester, ProgressDao dao) async {
 }
 
 /// Opens the Animals puzzle from the theme screen and solves
-/// all nine pieces.
+/// all nine pieces. Since S2-01 (SA-WP-1) the theme tap lands
+/// on the mode select screen first — one extra mechanical
+/// tap on 'Jigsaw' (contract S2-01 §14); the rest of the
+/// flow is unchanged.
 Future<void> _solveAnimalsPuzzle(WidgetTester tester) async {
   await tester.tap(find.text('Animals'));
+  await _pumpReal(tester);
+  expect(find.byType(ModeSelectScreen), findsOneWidget);
+  await tester.tap(find.text('Jigsaw'));
   await _pumpReal(tester);
   expect(find.byType(JigsawPlayScreen), findsOneWidget);
   for (var piece = 0; piece < 9; piece++) {

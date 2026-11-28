@@ -2,6 +2,28 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-28 — S2-01: test đã khóa (James)
+
+- PR `test/S2-01`: `test/features/word_play/word_play_test.dart`
+  (WID-WP-01..11, `5cfa9da6…`),
+  `test/features/app_shell/word_completion_flow_test.dart`
+  (INT-WP-01..03, `1c5a3744…`),
+  `test/data/asset_loader_word_test.dart`
+  (UNIT-AW-01..04, `2a0989c4…`) — khóa vào
+  `harness/tests.lock`.
+- Cập nhật cơ học theo SA-WP-1 (contract §14):
+  INT-CS thêm một chạm "Jigsaw" sau thẻ Animals
+  (`completion_flow_test.dart`, hash mới
+  `20f8cfe8…`) và Maestro
+  `persistence_restart.yaml` thêm `tapOn: "Jigsaw"`
+  (hash mới `31d78ef2…`) — ID/kịch bản/assert khác
+  không đổi, khóa hash lại.
+- Golden `test/goldens/word_play.png`: sinh tại
+  máy khi nhánh feat có màn hình, hash khóa bổ
+  sung vào tests.lock trên nhánh test ngay sau
+  đó; PNG đi đường GitHub web UI (không qua
+  connector) như tiền lệ S1-03.
+
 ## 2026-11-28 — S2-01: mở contract (James)
 
 - `harness/contracts/S2-01.md`: ghi 9 chốt của
