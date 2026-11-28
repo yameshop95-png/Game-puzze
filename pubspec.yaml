@@ -43,10 +43,9 @@ dev_dependencies:
     sdk: flutter
   integration_test:
     sdk: flutter
-  # drift_dev is intentionally NOT pinned yet (Phase 0.3 note): every
-  # drift_dev that pairs with drift >= 2.34 requires analyzer ^13, which
-  # the pinned Flutter 3.38.1 SDK cannot resolve. Revisit at S1-02 when
-  # code generation is first needed - see harness/progress.md.
+  # drift_dev pinned at S1-02 (contract SA-DB-6): the Flutter
+  # 3.50.1 upgrade (Paul's Huong B decision) unblocked analyzer
+  # ^13, so drift_dev resolves again - see harness/progress.md.
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -55,6 +54,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
   build_runner: ^2.15.1
+  drift_dev: ^2.35.3
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

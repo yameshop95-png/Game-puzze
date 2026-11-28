@@ -5,6 +5,10 @@ include: package:flutter_lints/flutter.yaml
 
 analyzer:
   errors:
+    # Flutter 3.50 deprecates the bundled material.dart in favour of
+    # package:material_ui, which is not a pub dependency of this
+    # project (PR #31 CI verdict, issue #2 comment 7229591289):
+    # keep the material.dart import and silence the info instead.
     deprecated_member_use: ignore
   language:
     strict-casts: true
@@ -13,6 +17,9 @@ analyzer:
   exclude:
     - "**/*.g.dart"
     - "**/*.freezed.dart"
+    - build/**
+    - android/**
+    - ios/**
 
 linter:
   rules:
