@@ -177,6 +177,22 @@ Future<void> _dragOnBoard(WidgetTester tester, Offset from, Offset to) async {
   await tester.pump();
 }
 
+/// A pure tap (contract S2-02): down + up at the same
+/// point, no movement — the tap path of the pointer
+/// state machine (travel <= 18 dp, SA-J2-2/5).
+Future<void> _tapAt(WidgetTester tester, Offset pos) async {
+  await tester.tapAt(pos);
+  await tester.pump();
+}
+
+/// Selects a tray piece by tapping it (contract
+/// S2-02): scroll its slot into view first, then tap
+/// its visible centre.
+Future<void> _tapTraySlot(WidgetTester tester, int slot) async {
+  await _scrollTrayTo(tester, slot);
+  await _tapAt(tester, _slotCenter(tester, slot));
+}
+
 Future<void> _placeHome(
   WidgetTester tester,
   int pieceId,
@@ -387,6 +403,210 @@ void main() {
           _cellCenter(tester, (home.row + 1) % 3, home.col),
         );
         expect(_painter(tester).board.isHome(0), isTrue);
+        expect(completions, 1);
+      },
+    );
+  });
+
+  group('JigsawPlayScreen tap-to-place S2-02', () {
+    testWidgets('WID-JP-13 tapping a tray piece selects it', (tester) async {
+      _useEmulatorSurface(tester);
+      await _pumpPlay(tester);
+      final order = _seededOrder();
+      final piece = order.first;
+      expect(_painter(tester).selectedPieceId, isNull);
+
+      await _tapTraySlot(tester, 0);
+
+      final painter = _painter(tester);
+      expect(painter.selectedPieceId, piece);
+      expect(painter.board.isPlaced(piece), isFalse);
+      expect(painter.board.placedCount, 0);
+    });
+
+    testWidgets(
+      'WID-JP-14 tapping the selected tray piece again deselects it',
+      (tester) async {
+        _useEmulatorSurface(tester);
+        await _pumpPlay(tester);
+        final order = _seededOrder();
+        final piece = order.first;
+
+        await _tapTraySlot(tester, 0);
+        expect(_painter(tester).selectedPieceId, piece);
+
+        await _tapAt(tester, _slotCenter(tester, 0));
+        expect(_painter(tester).selectedPieceId, isNull);
+        expect(_painter(tester).board.placedCount, 0);
+      },
+    );
+
+    testWidgets('WID-JP-15 tapping another tray piece switches the selection', (
+      tester,
+    ) async {
+      _useEmulatorSurface(tester);
+      await _pumpPlay(tester);
+      final order = _seededOrder();
+
+      await _tapTraySlot(tester, 0);
+      expect(_painter(tester).selectedPieceId, order[0]);
+
+      await _tapTraySlot(tester, 1);
+      expect(_painter(tester).selectedPieceId, order[1]);
+      expect(_painter(tester).board.placedCount, 0);
+    });
+
+    testWidgets(
+      'WID-JP-16 tapping the empty home cell places the selected piece home',
+      (tester) async {
+        _useEmulatorSurface(tester);
+        await _pumpPlay(tester);
+        final order = _seededOrder();
+        final piece = order.first;
+        final home = _painter(tester).board.homeOf(piece);
+
+        await _tapTraySlot(tester, 0);
+        await _tapAt(tester, _cellCenter(tester, home.row, home.col));
+
+        expect(_painter(tester).board.isHome(piece), isTrue);
+        expect(_painter(tester).selectedPieceId, isNull);
+      },
+    );
+
+    testWidgets(
+      'WID-JP-17 tapping a wrong empty cell places the selected piece there',
+      (tester) async {
+        _useEmulatorSurface(tester);
+        await _pumpPlay(tester);
+        final order = _seededOrder();
+        final piece = order.first;
+        final home = _painter(tester).board.homeOf(piece);
+        final wrongRow = (home.row + 1) % 3;
+
+        await _tapTraySlot(tester, 0);
+        await _tapAt(tester, _cellCenter(tester, wrongRow, home.col));
+
+        final board = _painter(tester).board;
+        expect(board.positionOf(piece), CellPos(wrongRow, home.col));
+        expect(board.isHome(piece), isFalse);
+        expect(_painter(tester).selectedPieceId, isNull);
+      },
+    );
+
+    testWidgets(
+      'WID-JP-18 tapping an occupied cell selects the occupant instead',
+      (tester) async {
+        _useEmulatorSurface(tester);
+        await _pumpPlay(tester);
+        final order = _seededOrder();
+        final first = order[0];
+        final second = order[1];
+        await _placeHome(tester, first, order);
+        final home = _painter(tester).board.homeOf(first);
+
+        await _tapTraySlot(tester, order.indexOf(second));
+        expect(_painter(tester).selectedPieceId, second);
+
+        // SA-J2-4: the tap acts on the tapped thing —
+        // the occupant — never a rejectedOccupied on
+        // the tap path; the board does not change.
+        await _tapAt(tester, _cellCenter(tester, home.row, home.col));
+
+        final painter = _painter(tester);
+        expect(painter.selectedPieceId, first);
+        expect(painter.board.isHome(first), isTrue);
+        expect(painter.board.isPlaced(second), isFalse);
+        expect(painter.board.placedCount, 1);
+      },
+    );
+
+    testWidgets(
+      'WID-JP-19 tapping a placed piece selects it, tapping a cell moves it',
+      (tester) async {
+        _useEmulatorSurface(tester);
+        await _pumpPlay(tester);
+        final order = _seededOrder();
+        final piece = order.first;
+        final home = _painter(tester).board.homeOf(piece);
+        final wrongRow = (home.row + 1) % 3;
+        await _dragFromTray(tester, 0, _cellCenter(tester, wrongRow, home.col));
+        expect(
+          _painter(tester).board.positionOf(piece),
+          CellPos(wrongRow, home.col),
+        );
+
+        await _tapAt(tester, _cellCenter(tester, wrongRow, home.col));
+        expect(_painter(tester).selectedPieceId, piece);
+
+        await _tapAt(tester, _cellCenter(tester, home.row, home.col));
+        expect(_painter(tester).board.isHome(piece), isTrue);
+        expect(_painter(tester).selectedPieceId, isNull);
+      },
+    );
+
+    testWidgets('WID-JP-20 scrolling the tray keeps the selection', (
+      tester,
+    ) async {
+      _useEmulatorSurface(tester);
+      await _pumpPlay(tester);
+      final order = _seededOrder();
+      final piece = order.first;
+
+      await _tapTraySlot(tester, 0);
+      expect(_painter(tester).selectedPieceId, piece);
+
+      await _scrollTrayTo(tester, 8);
+      expect(_painter(tester).selectedPieceId, piece);
+      expect(_painter(tester).board.placedCount, 0);
+    });
+
+    testWidgets('WID-JP-21 starting a real drag clears the selection', (
+      tester,
+    ) async {
+      _useEmulatorSurface(tester);
+      await _pumpPlay(tester);
+      final order = _seededOrder();
+      final first = order[0];
+      final second = order[1];
+
+      await _tapTraySlot(tester, 0);
+      expect(_painter(tester).selectedPieceId, first);
+
+      final homeSecond = _painter(tester).board.homeOf(second);
+      await _dragFromTray(
+        tester,
+        order.indexOf(second),
+        _cellCenter(tester, homeSecond.row, homeSecond.col),
+      );
+
+      expect(_painter(tester).board.isHome(second), isTrue);
+      expect(_painter(tester).selectedPieceId, isNull);
+    });
+
+    testWidgets(
+      'WID-JP-22 solving the whole board by taps fires onCompleted once',
+      (tester) async {
+        _useEmulatorSurface(tester);
+        var completions = 0;
+        await _pumpPlay(tester, onCompleted: (_) => completions++);
+        final order = _seededOrder();
+
+        for (var piece = 0; piece < 9; piece++) {
+          final home = _painter(tester).board.homeOf(piece);
+          await _tapTraySlot(tester, order.indexOf(piece));
+          expect(_painter(tester).selectedPieceId, piece);
+          await _tapAt(tester, _cellCenter(tester, home.row, home.col));
+          expect(_painter(tester).board.isHome(piece), isTrue);
+        }
+        expect(_painter(tester).board.isComplete, isTrue);
+        expect(completions, 1);
+
+        // Locked after completion (SA-J2-6): further
+        // taps change nothing and do not refire.
+        final home0 = _painter(tester).board.homeOf(0);
+        await _tapAt(tester, _cellCenter(tester, home0.row, home0.col));
+        expect(_painter(tester).board.isHome(0), isTrue);
+        expect(_painter(tester).board.isComplete, isTrue);
         expect(completions, 1);
       },
     );

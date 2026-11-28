@@ -2,6 +2,90 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-28 — S2-02: code xong, evaluate xanh (James)
+
+- PR `feat/S2-02-tap-place`: chỉ sửa 2 file
+  theo SA-J2-8. `jigsaw_board_painter.dart` thêm
+  field `selectedPieceId` (cửa sổ test như
+  `hintCell`) + viền chọn 3 px `0xFF1565C0` ở ô
+  board hoặc ô khay theo vị trí hiện tại của
+  mảnh + `shouldRepaint`.
+  `jigsaw_play_screen.dart`: trạng thái
+  `int? _selectedPieceId`; máy trạng thái pointer
+  thêm nhánh chạm — up với độ lệch lớn nhất
+  ≤ 18 dp và chưa thành nhấc kéo long-press thì
+  là chạm (chạm xuống ô board trống giờ cũng
+  được theo dõi để nhận chạm đặt); chạm luôn
+  tác động lên vật bị chạm (chọn/toggle/đổi
+  chọn — đường chạm không sinh
+  `rejectedOccupied`), ô đích của chạm là ô
+  chứa điểm chạm (floor, không `snapTarget`);
+  thả-kéo và chạm dùng chung một hàm resolve
+  qua `PlacePiece` + một đường hoàn thành gọi
+  `onCompleted` đúng 1 lần; chọn bị dọn khi
+  drag thật di chuyển > 18 dp, khi đặt thành
+  công qua chạm, hoặc khi chạm lại vật đang
+  chọn; cuộn khay giữ chọn (nhánh cuộn không đi
+  qua drag). Engine/constructor/`app.dart`
+  không đổi; Semantics để S2-04 (SA-J2-10).
+- Kiểm chứng tại máy: `evaluate.sh S2` PASS mọi
+  cổng local (pre-check S2-01 + S2-02 OK, content
+  validator PASS, purity PASS, tests lock PASS,
+  analyze PASS, **227/227 test** = 217 cũ + 10
+  WID-JP mới, engine coverage **92,4%**);
+  `evaluate.sh S1` cũng PASS tương tự — không
+  regress. Cổng integration fail tại máy chỉ vì
+  "No devices are connected" (cổng CI — IT-J-07/08
+  chạy ở android-it trên CI).
+
+## 2026-11-28 — S2-02: test đã khóa (James)
+
+- PR `test/S2-02`: `test/features/jigsaw_play/jigsaw_play_test.dart`
+  thêm nhóm S2-02 (WID-JP-13..22: chọn ở khay,
+  chạm lại bỏ chọn, đổi chọn, chạm ô trống đặt
+  đúng/đặt sai, chạm occupant đổi chọn, chọn
+  mảnh board + di chuyển bằng chạm, cuộn giữ
+  chọn, kéo thật dọn chọn, giải trọn bằng chạm
+  → `onCompleted` 1 lần) — hash mới của file
+  `aee373ba…`; file mới
+  `integration_test/jigsaw_tap_place_test.dart`
+  (IT-J-07 giải trọn 3×3 chỉ bằng chạm, IT-J-08
+  chọn → đặt sai → di chuyển lại bằng chạm —
+  `737af033…`). Cả hai khóa vào
+  `harness/tests.lock`; pre-check `S2-02` OK ở
+  giai đoạn test (verify tests lock OK). Bộ test
+  tham chiếu field `selectedPieceId` của painter
+  chưa tồn tại — đỏ biên dịch cho tới nhánh feat
+  (đúng quy trình test-viết-trước).
+
+## 2026-11-28 — S2-02: mở contract (James)
+
+- `harness/contracts/S2-02.md`: ghi 10 chốt của
+  Opus (comment `7239396699`, SA-J2-1..SA-J2-10,
+  chốt theo khuyến nghị ở cổng `7239258618`, một
+  làm rõ: ca IT-J-08 bắt buộc) — chạm-chọn-chạm-đặt
+  cho màn chơi: toggle chọn ở khay + trạng thái
+  `selectedPieceId` qua painter, mảnh board cũng
+  chọn/di chuyển bằng chạm (ngưỡng 18 dp), ô đích
+  là ô chứa điểm chạm (không dùng `snapTarget`),
+  không đường về khay, chạm luôn tác động lên vật
+  bị chạm (đường chạm không sinh
+  `rejectedOccupied`), cuộn giữ chọn + long-press
+  giữ nguyên, hai đường cùng tồn tại với hàm
+  resolve chung và 3 điểm dọn chọn, viền chọn
+  3 px `0xFF1565C0`, chỉ sửa 2 file jigsaw_play
+  (không constructor/engine/`app.dart` mới), bộ
+  test WID-JP-13..22 + IT-J-07/08 với định nghĩa
+  "không kéo" = không cử chỉ kéo nào áp lên mảnh,
+  Semantics để S2-04.
+- Khối pre-check `S2-02` trong
+  `tool/check_e_step.sh` + thêm `S2-02` vào
+  `precheck_s2` trong `tool/evaluate.sh`. Ở giai
+  đoạn contract, pre-check S2-02 fail đúng lý do
+  đầu tiên (file integration
+  `jigsaw_tap_place_test.dart` chưa tồn tại) —
+  test viết ở nhánh test xếp chồng tiếp theo.
+
 ## 2026-11-28 — S2-01: code xong, evaluate xanh (James)
 
 - PR `feat/S2-01-word-play`: loader + model thêm

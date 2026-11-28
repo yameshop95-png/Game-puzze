@@ -23,6 +23,17 @@ import 'jigsaw_board_painter.dart';
 /// drop resolves through [PlacePiece] (contract §7),
 /// so a rejected or out-of-tolerance drop simply ends
 /// the visual drag — the piece is back where it was.
+///
+/// S2-02 adds the tap-to-place path alongside the drag
+/// (contract S2-02, SA-J2-1..6): a tap (pointer up with
+/// at most 18 dp of travel, before any long-press
+/// pickup) selects a piece — in the tray or already on
+/// the board — and a tap on an empty board cell places
+/// the selected piece there through the SAME
+/// [PlacePiece] resolution as a drop. A tap always
+/// acts on the thing tapped: tapping an occupied cell
+/// selects its occupant, so the tap path never
+/// produces a rejected-occupied result.
 class JigsawPlayScreen extends StatefulWidget {
   final PuzzleAsset asset;
   final ImageProvider image;
@@ -78,6 +89,18 @@ class _JigsawPlayScreenState extends State<JigsawPlayScreen> {
   int? _dragPieceId;
   Offset? _dragCenter;
   Offset _grabOffset = Offset.zero;
+
+  // Tap-to-place state (contract S2-02). _selectedPieceId
+  // is the piece chosen by a tap (SA-J2-1); it is read
+  // back through the painter, like the hint cell.
+  // _maxTravel is the largest displacement from the
+  // down point during the active gesture — a tap is an
+  // up with _maxTravel <= 18 (SA-J2-2/5). _dragFromLongPress
+  // marks a drag begun by the tray long-press timer: its
+  // release resolves as a drop, never as a tap (SA-J2-5).
+  int? _selectedPieceId;
+  double _maxTravel = 0;
+  bool _dragFromLongPress = false;
 
   // Tray scrolling (contract §8 clarification): the
   // strip is wider than the screen, so a tray gesture
@@ -188,17 +211,28 @@ class _JigsawPlayScreenState extends State<JigsawPlayScreen> {
         pos.dy < trayTop + JigsawBoardPainter.trayHeight;
   }
 
+  bool _inBoard(Offset pos) =>
+      pos.dx >= 16 &&
+      pos.dx < 16 + _boardSide &&
+      pos.dy >= 0 &&
+      pos.dy < _boardSide;
+
   void _onPointerDown(PointerDownEvent event) {
     if (_completed || _activePointer != null) return;
+    _maxTravel = 0;
+    _dragFromLongPress = false;
     final hit = _hitTest(event.localPosition);
     if (hit == null) {
       // Empty tray bed: the gesture scrolls the strip.
-      if (_inTray(event.localPosition)) {
+      // An empty board cell: nothing to drag or scroll,
+      // but the pointer is still tracked so its release
+      // can land as a tap placement (contract S2-02 §7).
+      if (_inTray(event.localPosition) || _inBoard(event.localPosition)) {
         _activePointer = event.pointer;
         _downPos = event.localPosition;
         _lastPos = event.localPosition;
         _downTrayScroll = _trayScroll;
-        _scrollingTray = true;
+        _scrollingTray = _inTray(event.localPosition);
       }
       return;
     }
@@ -211,6 +245,7 @@ class _JigsawPlayScreenState extends State<JigsawPlayScreen> {
       _longPressTimer = Timer(kLongPressTimeout, () {
         if (mounted && _pendingTrayPiece == hit.pieceId) {
           _pendingTrayPiece = null;
+          _dragFromLongPress = true;
           _beginDrag(hit.pieceId, _lastPos);
         }
       });
@@ -233,8 +268,19 @@ class _JigsawPlayScreenState extends State<JigsawPlayScreen> {
   void _onPointerMove(PointerMoveEvent event) {
     if (event.pointer != _activePointer) return;
     _lastPos = event.localPosition;
+    final travel = (event.localPosition - _downPos).distance;
+    if (travel > _maxTravel) _maxTravel = travel;
     if (_dragPieceId != null) {
-      setState(() => _dragCenter = event.localPosition + _grabOffset);
+      // A drag that has really begun (travel past the
+      // 18 dp slop) clears any tap selection (contract
+      // S2-02 §7, SA-J2-6). Tray scrolling never reaches
+      // this branch — _dragPieceId is null there — so a
+      // scroll keeps the selection (SA-J2-5).
+      final clearSelection = travel > 18 && _selectedPieceId != null;
+      setState(() {
+        if (clearSelection) _selectedPieceId = null;
+        _dragCenter = event.localPosition + _grabOffset;
+      });
       return;
     }
     if (_pendingTrayPiece != null &&
@@ -259,6 +305,19 @@ class _JigsawPlayScreenState extends State<JigsawPlayScreen> {
     _pendingTrayPiece = null;
     _scrollingTray = false;
     _activePointer = null;
+    // Tap path (contract S2-02 §3/§6, SA-J2-2/5): an up
+    // with at most 18 dp of travel, in a gesture that
+    // never became a long-press pickup, is a tap — any
+    // not-really-begun board drag is simply cancelled
+    // and the tap is handled on its own terms.
+    if (event is PointerUpEvent && _maxTravel <= 18 && !_dragFromLongPress) {
+      setState(() {
+        _dragPieceId = null;
+        _dragCenter = null;
+      });
+      _handleTap();
+      return;
+    }
     final pieceId = _dragPieceId;
     final centre = _dragCenter;
     if (pieceId == null || centre == null) {
@@ -278,25 +337,75 @@ class _JigsawPlayScreenState extends State<JigsawPlayScreen> {
     );
     var justCompleted = false;
     if (target != null) {
-      final result = PlacePiece(pieceId, target).apply(_board);
-      _boardVersion++;
-      justCompleted = result.justCompleted;
+      justCompleted = _resolvePlacement(pieceId, target);
     }
     setState(() {
       _dragPieceId = null;
       _dragCenter = null;
       if (justCompleted) _completed = true;
     });
-    if (justCompleted && !_completedFired) {
-      _completedFired = true;
-      // SA-S5-4: stop the clock at completion, before
-      // the callback reads it.
-      _stopwatch.stop();
-      widget.onCompleted?.call(_stopwatch.elapsed);
-    }
+    if (justCompleted) _fireCompleted();
   }
 
   bool _completedFired = false;
+
+  /// Fires the completion callback exactly once
+  /// (SA-S5-4): the clock stops at completion, before
+  /// the callback reads it. Shared by the drop path
+  /// and the tap path (contract S2-02 §7).
+  void _fireCompleted() {
+    if (_completedFired) return;
+    _completedFired = true;
+    _stopwatch.stop();
+    widget.onCompleted?.call(_stopwatch.elapsed);
+  }
+
+  /// The one placement resolution for both entry paths
+  /// (contract S2-02 §7, SA-J2-6): the board changes
+  /// only through [PlacePiece]. Returns whether this
+  /// placement just completed the board.
+  bool _resolvePlacement(int pieceId, CellPos target) {
+    final result = PlacePiece(pieceId, target).apply(_board);
+    _boardVersion++;
+    return result.justCompleted;
+  }
+
+  /// Handles a tap at the gesture's down point
+  /// (contract S2-02 §4). A tap always acts on the
+  /// thing tapped (SA-J2-4): a piece — tray or board —
+  /// is selected, re-tapped to deselect, or switched
+  /// to; an empty board cell receives the selected
+  /// piece, mapped by the cell containing the point
+  /// (floor, SA-J2-3 — never snapTarget); anything
+  /// else (empty tray bed, outside the play areas)
+  /// leaves the selection untouched.
+  void _handleTap() {
+    final hit = _hitTest(_downPos);
+    if (hit != null) {
+      setState(() {
+        _selectedPieceId = _selectedPieceId == hit.pieceId ? null : hit.pieceId;
+      });
+      return;
+    }
+    final selected = _selectedPieceId;
+    if (selected == null || !_inBoard(_downPos)) return;
+    final target = CellPos(
+      (_downPos.dy / _cell).floor(),
+      ((_downPos.dx - 16) / _cell).floor(),
+    );
+    // The target cell is empty (the hit test above
+    // found no piece there), so the outcome is placed
+    // or moved — never rejectedOccupied, which stays
+    // exclusive to the drop path (SA-J2-4).
+    final justCompleted = _resolvePlacement(selected, target);
+    setState(() {
+      // A successful tap placement clears the
+      // selection (SA-J2-6).
+      _selectedPieceId = null;
+      if (justCompleted) _completed = true;
+    });
+    if (justCompleted) _fireCompleted();
+  }
 
   void _onHint() {
     final unplaced = _trayOrder.visible(_board.isPlaced);
@@ -341,6 +450,7 @@ class _JigsawPlayScreenState extends State<JigsawPlayScreen> {
                 dragPieceId: _dragPieceId,
                 dragCenter: _dragCenter,
                 hintCell: _hintCell,
+                selectedPieceId: _selectedPieceId,
                 trayScrollOffset: _trayScroll,
                 boardVersion: _boardVersion,
               ),

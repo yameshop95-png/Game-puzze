@@ -15,7 +15,10 @@ import '../../engine/jigsaw/tray_order.dart';
 /// (contract §11): pieces have no widgets of their own,
 /// so widget/integration tests read [board], [trayOrder]
 /// and [hintCell] through the painter attached to the
-/// `jigsaw-board-painter` CustomPaint.
+/// `jigsaw-board-painter` CustomPaint. S2-02 adds
+/// [selectedPieceId] to that window (contract S2-02 §8):
+/// the piece chosen by the tap-to-place path, read by
+/// tests exactly like [hintCell].
 ///
 /// Geometry (contract §8), in body-local coordinates
 /// (the body starts right under the AppBar, so the
@@ -44,6 +47,13 @@ class JigsawBoardPainter extends CustomPainter {
   /// The cell lit by Hint (contract §3), or null.
   final CellPos? hintCell;
 
+  /// The piece selected by tap-to-place (contract
+  /// S2-02, SA-J2-1/7), or null when nothing is
+  /// selected. Drawn with a dark-blue 3px border —
+  /// deliberately a different colour from the yellow
+  /// Hint border so the two can show at once.
+  final int? selectedPieceId;
+
   /// Horizontal scroll offset of the tray strip. The
   /// tray holds gridSize^2 slots of one cell each
   /// (contract §8), which is wider than the screen, so
@@ -64,6 +74,7 @@ class JigsawBoardPainter extends CustomPainter {
     required this.dragPieceId,
     required this.dragCenter,
     required this.hintCell,
+    required this.selectedPieceId,
     required this.trayScrollOffset,
     required this.boardVersion,
   });
@@ -146,6 +157,42 @@ class JigsawBoardPainter extends CustomPainter {
       );
     }
 
+    // Selection border over the tap-selected piece
+    // (contract S2-02 §8, SA-J2-7): 3px dark blue,
+    // wherever the piece currently sits — its board
+    // cell or its tray slot (drawn at the visible,
+    // scroll-shifted position like the piece itself).
+    // The dragged piece is skipped: it is drawn at
+    // the pointer below, and a real drag has already
+    // cleared the selection in the screen's state.
+    final selected = selectedPieceId;
+    if (selected != null && selected != dragPieceId) {
+      final pos = board.positionOf(selected);
+      final Rect rect;
+      if (pos != null) {
+        rect = Rect.fromLTWH(
+          boardLeft + cell * pos.col,
+          cell * pos.row,
+          cell,
+          cell,
+        );
+      } else {
+        final slot = trayOrder.indexOf(selected);
+        final centre = Offset(
+          boardLeft + cell * slot + cell / 2 - trayScrollOffset,
+          trayTop + trayHeight / 2,
+        );
+        rect = Rect.fromCenter(center: centre, width: cell, height: cell);
+      }
+      canvas.drawRect(
+        rect,
+        Paint()
+          ..color = const Color(0xFF1565C0)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3,
+      );
+    }
+
     // The lifted piece follows the pointer.
     final dragId = dragPieceId;
     final centre = dragCenter;
@@ -203,5 +250,6 @@ class JigsawBoardPainter extends CustomPainter {
       oldDelegate.dragPieceId != dragPieceId ||
       oldDelegate.dragCenter != dragCenter ||
       oldDelegate.hintCell != hintCell ||
+      oldDelegate.selectedPieceId != selectedPieceId ||
       oldDelegate.trayScrollOffset != trayScrollOffset;
 }
