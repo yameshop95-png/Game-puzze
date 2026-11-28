@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/gestures.dart' show kLongPressTimeout;
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 
 import '../../engine/jigsaw/board.dart';
 import '../../engine/jigsaw/commands.dart';
@@ -34,6 +35,17 @@ import 'jigsaw_board_painter.dart';
 /// acts on the thing tapped: tapping an occupied cell
 /// selects its occupant, so the tap path never
 /// produces a rejected-occupied result.
+///
+/// S2-04 adds the accessibility layer (contract S2-04,
+/// SA-J4-1/2/3/5): a transparent semantics overlay
+/// gives every piece and every empty cell a node
+/// labelled by its CURRENT position — a piece's
+/// spoken number is its tray position, never its id
+/// (E3 decision 3.4) — and each node's onTap re-enters
+/// the same tap branch, so a screen-reader user can
+/// play the whole game. Correct placements and the
+/// completion are announced from the shared
+/// resolution point.
 class JigsawPlayScreen extends StatefulWidget {
   final PuzzleAsset asset;
   final ImageProvider image;
@@ -364,23 +376,57 @@ class _JigsawPlayScreenState extends State<JigsawPlayScreen> {
   /// (contract S2-02 §7, SA-J2-6): the board changes
   /// only through [PlacePiece]. Returns whether this
   /// placement just completed the board.
+  ///
+  /// Announcements originate here (contract S2-04 §4,
+  /// SA-J4-3): this point covers the drag path and
+  /// the tap path alike. Only a correct placement
+  /// and the completion are announced — never a
+  /// selection, a wrong placement or a rejection.
   bool _resolvePlacement(int pieceId, CellPos target) {
     final result = PlacePiece(pieceId, target).apply(_board);
     _boardVersion++;
+    if (result.isCorrect) {
+      _announce('Piece ${_trayOrder.indexOf(pieceId) + 1} placed correctly');
+    }
+    if (result.justCompleted) {
+      _announce('Puzzle completed');
+    }
     return result.justCompleted;
   }
 
+  /// Sends a screen-reader announcement through the
+  /// current API (contract S2-04 §4: `sendAnnouncement`
+  /// replaces the deprecated `announce` of §S2-04's
+  /// wording).
+  void _announce(String message) {
+    SemanticsService.sendAnnouncement(
+      View.of(context),
+      message,
+      TextDirection.ltr,
+    );
+  }
+
   /// Handles a tap at the gesture's down point
-  /// (contract S2-02 §4). A tap always acts on the
-  /// thing tapped (SA-J2-4): a piece — tray or board —
-  /// is selected, re-tapped to deselect, or switched
+  /// (contract S2-02 §4) — see [_handleTapAt].
+  void _handleTap() => _handleTapAt(_downPos);
+
+  /// The one tap branch (contract S2-02 §4), entered
+  /// with a body-local point: by the pointer machine
+  /// with the gesture's down point, and by the
+  /// semantics overlay (contract S2-04 §5, SA-J4-5)
+  /// with the centre of the activated node — the
+  /// TalkBack double-tap lands on exactly the thing
+  /// a physical tap at that point would act on.
+  /// A tap always acts on the thing tapped
+  /// (SA-J2-4): a piece — tray or board — is
+  /// selected, re-tapped to deselect, or switched
   /// to; an empty board cell receives the selected
   /// piece, mapped by the cell containing the point
   /// (floor, SA-J2-3 — never snapTarget); anything
   /// else (empty tray bed, outside the play areas)
   /// leaves the selection untouched.
-  void _handleTap() {
-    final hit = _hitTest(_downPos);
+  void _handleTapAt(Offset pos) {
+    final hit = _hitTest(pos);
     if (hit != null) {
       setState(() {
         _selectedPieceId = _selectedPieceId == hit.pieceId ? null : hit.pieceId;
@@ -388,10 +434,10 @@ class _JigsawPlayScreenState extends State<JigsawPlayScreen> {
       return;
     }
     final selected = _selectedPieceId;
-    if (selected == null || !_inBoard(_downPos)) return;
+    if (selected == null || !_inBoard(pos)) return;
     final target = CellPos(
-      (_downPos.dy / _cell).floor(),
-      ((_downPos.dx - 16) / _cell).floor(),
+      (pos.dy / _cell).floor(),
+      ((pos.dx - 16) / _cell).floor(),
     );
     // The target cell is empty (the hit test above
     // found no piece there), so the outcome is placed
@@ -415,6 +461,93 @@ class _JigsawPlayScreenState extends State<JigsawPlayScreen> {
     _hintTimer = Timer(const Duration(milliseconds: 1200), () {
       if (mounted) setState(() => _hintCell = null);
     });
+  }
+
+  /// The semantics overlay (contract S2-04 §2/§3/§5,
+  /// SA-J4-1/2/5): one transparent node per piece and
+  /// per empty cell, positioned on the rect the
+  /// painter draws for it — board cell, or tray slot
+  /// shifted by the strip's scroll offset. Rects
+  /// follow the board/tray STATE at this build, not
+  /// the transient drag position: mid-drag, the
+  /// lifted piece's node stays at its source rect.
+  ///
+  /// The layer never claims a hit: its render
+  /// objects are plain semantics annotations over
+  /// childless boxes, whose hit tests fall through,
+  /// so physical pointer behaviour is unchanged
+  /// (the [Listener] below keeps every pointer) —
+  /// the whole pre-S2-04 gesture suite is the
+  /// evidence. It is deliberately NOT wrapped in
+  /// [IgnorePointer]: on this SDK an ignored subtree
+  /// gets `isBlockingUserActions`, which would
+  /// disable the very `onTap` actions SA-J4-5
+  /// requires (the deviation from SA-J4-1's letter
+  /// is recorded in contract S2-04 §2). A node's
+  /// `onTap` travels through the semantics tree —
+  /// the TalkBack double-tap — and re-enters the
+  /// shared tap branch at the node's centre.
+  Widget _semanticsOverlay() {
+    final cell = _cell;
+    final trayTop = _boardSide + JigsawBoardPainter.trayGap;
+    final nodes = <Widget>[];
+
+    void addNode(Rect rect, String label) {
+      nodes.add(
+        Positioned(
+          left: rect.left,
+          top: rect.top,
+          width: rect.width,
+          height: rect.height,
+          child: Semantics(
+            label: label,
+            onTap: () => _handleTapAt(rect.center),
+            child: const SizedBox.expand(),
+          ),
+        ),
+      );
+    }
+
+    // Empty cells: activating one places the
+    // selected piece there (or does nothing when
+    // nothing is selected, like a physical tap).
+    // An occupied cell has no empty-cell node — its
+    // piece carries a node of its own.
+    for (var row = 0; row < _board.gridSize; row++) {
+      for (var col = 0; col < _board.gridSize; col++) {
+        if (_board.pieceAt(CellPos(row, col)) != null) continue;
+        addNode(
+          Rect.fromLTWH(16 + cell * col, cell * row, cell, cell),
+          'Empty cell, row ${row + 1} column ${col + 1}',
+        );
+      }
+    }
+
+    // Pieces, labelled by current position (SA-J4-2).
+    for (var id = 0; id < _board.totalPieces; id++) {
+      final number = _trayOrder.indexOf(id) + 1;
+      final suffix = _selectedPieceId == id ? ', selected' : '';
+      final pos = _board.positionOf(id);
+      if (pos != null) {
+        addNode(
+          Rect.fromLTWH(16 + cell * pos.col, cell * pos.row, cell, cell),
+          'Piece $number, row ${pos.row + 1} column ${pos.col + 1}, '
+          '${_board.isHome(id) ? 'placed correctly' : 'placed'}$suffix',
+        );
+      } else {
+        final slot = _trayOrder.indexOf(id);
+        final centre = Offset(
+          16 + cell * slot + cell / 2 - _trayScroll,
+          trayTop + JigsawBoardPainter.trayHeight / 2,
+        );
+        addNode(
+          Rect.fromCenter(center: centre, width: cell, height: cell),
+          'Piece $number, in tray, not placed$suffix',
+        );
+      }
+    }
+
+    return Positioned.fill(child: Stack(children: nodes));
   }
 
   @override
@@ -478,6 +611,10 @@ class _JigsawPlayScreenState extends State<JigsawPlayScreen> {
               child: const SizedBox.expand(),
             ),
           ),
+          // The accessibility layer (contract S2-04):
+          // transparent, pointer-transparent, drawn
+          // last but never painted.
+          _semanticsOverlay(),
         ],
       ),
     );

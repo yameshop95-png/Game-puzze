@@ -18,11 +18,20 @@
 /// (SA-WP-4): correct locks the screen and fires
 /// [onCompleted] exactly once; incorrect shows an
 /// inline notice and keeps the row.
+///
+/// S2-04 completes the deferred SA-WP-9 semantics
+/// (contract S2-04 §6, SA-J4-4): chips are labelled
+/// by zone and position, the two zones are labelled
+/// semantics containers, the wrong-row notice is a
+/// live region, and completing the sentence sends
+/// the same `Puzzle completed` announcement as the
+/// jigsaw screen.
 library;
 
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 
 import '../../engine/word/sentence.dart';
 import '../../engine/word/validator.dart';
@@ -95,6 +104,14 @@ class _WordPlayScreenState extends State<WordPlayScreen> {
     });
     if (justCompleted) {
       _stopwatch.stop();
+      // SA-J4-4: completing the sentence is
+      // announced (the wrong-row case is not — its
+      // notice is a live region instead).
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        'Puzzle completed',
+        TextDirection.ltr,
+      );
       widget.onCompleted?.call(_stopwatch.elapsed);
     }
   }
@@ -111,8 +128,16 @@ class _WordPlayScreenState extends State<WordPlayScreen> {
 
   Widget _chip(int index, {required bool inAnswer}) {
     final token = _sentence.tokens[index];
+    // SA-J4-4 label: the verbatim token text plus
+    // its zone — and, in the answer row, its
+    // 1-based position within the row.
+    final label = inAnswer
+        ? '${token.text}, in your sentence, position '
+              '${_board.answer.indexOf(index) + 1} of ${_board.answer.length}'
+        : '${token.text}, in word bank';
     return Semantics(
-      label: token.text,
+      container: true,
+      label: label,
       button: true,
       child: ElevatedButton(
         key: ValueKey('${inAnswer ? 'answer' : 'pool'}_$index'),
@@ -161,51 +186,91 @@ class _WordPlayScreenState extends State<WordPlayScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              Text(
-                'Your sentence',
-                style: Theme.of(context).textTheme.labelLarge,
-              ),
-              const SizedBox(height: 8),
-              ConstrainedBox(
-                constraints: const BoxConstraints(minHeight: 48),
-                child: answer.isEmpty
-                    ? const Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'Tap the words below to build your sentence',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      )
-                    : Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          for (final index in answer)
-                            _chip(index, inAnswer: true),
-                        ],
+              // SA-J4-4: each zone is a labelled
+              // semantics container. The wrapper adds
+              // no pixels — same children, same gaps —
+              // so the layout and the golden are
+              // unchanged.
+              Semantics(
+                container: true,
+                label: 'Your sentence',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Excluded from semantics (the
+                    // CompletionScreen pattern of
+                    // SA-S5-3): the container already
+                    // carries this label, otherwise the
+                    // heading merges into it twice.
+                    ExcludeSemantics(
+                      child: Text(
+                        'Your sentence',
+                        style: Theme.of(context).textTheme.labelLarge,
                       ),
+                    ),
+                    const SizedBox(height: 8),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 48),
+                      child: answer.isEmpty
+                          ? const Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                'Tap the words below to build your sentence',
+                                style: TextStyle(color: Colors.grey),
+                              ),
+                            )
+                          : Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                for (final index in answer)
+                                  _chip(index, inAnswer: true),
+                              ],
+                            ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 8),
               SizedBox(
                 height: 20,
                 child: notice == null
                     ? null
-                    : Text(
-                        notice,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
+                    : Semantics(
+                        // SA-J4-4: the notice reads
+                        // itself out when it appears.
+                        liveRegion: true,
+                        child: Text(
+                          notice,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
                         ),
                       ),
               ),
               const SizedBox(height: 8),
-              Text('Word bank', style: Theme.of(context).textTheme.labelLarge),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final index in pool) _chip(index, inAnswer: false),
-                ],
+              Semantics(
+                container: true,
+                label: 'Word bank',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ExcludeSemantics(
+                      child: Text(
+                        'Word bank',
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final index in pool) _chip(index, inAnswer: false),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

@@ -2,6 +2,76 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-29 — S2-04: code xong, evaluate xanh (James)
+
+- PR `feat/S2-04-semantics`: chỉ sửa 2 file lib
+  theo SA-J4. `jigsaw_play_screen.dart`: lớp
+  overlay Semantics trong suốt trên Stack — một
+  node cho mỗi mảnh (rect board/khay đúng như
+  painter vẽ, lấy theo trạng thái chứ không theo
+  vị trí kéo thoáng qua) và mỗi ô trống; nhãn
+  theo vị trí HIỆN TẠI + số khay (E3 3.4) + hậu
+  tố `, selected`; `_handleTap` tách thành
+  `_handleTapAt(Offset)` để `onTap` của node
+  dùng lại đúng rẽ nhánh chạm (SA-J2-1..4) —
+  TalkBack double-tap chọn/bỏ chọn/đặt được;
+  `_resolvePlacement` phát `sendAnnouncement`:
+  `Piece N placed correctly` khi `isCorrect`,
+  thêm `Puzzle completed` khi `justCompleted`,
+  ngoài ra không announce. Painter/engine không
+  đổi. `word_play_screen.dart`: nhãn chip
+  `<token>, in word bank` /
+  `<token>, in your sentence, position k of n`
+  (chip Semantics thêm `container: true` để node
+  không bị gộp vào container zone ở trạng thái
+  hàng đáp án còn một chip — đã kiểm bằng probe);
+  hai zone bọc `Semantics(container: true)` đúng
+  nhãn nhóm, tiêu đề zone `ExcludeSemantics` theo
+  mẫu SA-S5-3; notice bọc `liveRegion: true`;
+  hoàn thành câu phát `Puzzle completed`.
+- **Đính chính cơ chế SA-J4-1 (ghi cả trong
+  contract §2 ở PR này):** KHÔNG bọc
+  `IgnorePointer` như câu chữ verdict — trên SDK
+  3.50.1 `RenderIgnorePointer` đặt
+  `isBlockingUserActions` cho subtree, làm
+  action `tap` của node bị chặn, phá đúng
+  SA-J4-5. Overlay không bọc gì vẫn không nhận
+  hit (render object là annotation thuần trên
+  box không con, hit test rơi qua) — toàn bộ bộ
+  gesture cũ xanh là bằng chứng hit-test không
+  đổi. Mục tiêu SA-J4-1 giữ nguyên, chờ Opus xác
+  nhận đính chính.
+- **Cổng còn CHỜ (không chặn merge S2-04, không
+  chặn đóng S2 — SA-J4-8):** (1) TalkBack thủ
+  công trên máy thật của Paul — vuốt qua từng
+  mảnh nghe nhãn, double-tap chọn/đặt, nghe
+  announce khi đặt đúng; Paul ghi model máy +
+  bản Android + ngày khi làm xong. (2) Perf máy
+  thật cấu hình thấp (SA-S6-1/SA-J3-4) — vẫn CHỜ
+  máy của Paul như các bước trước.
+- **Điểm chờ Opus quyết (contract §8):**
+  textContrast của màn word — placeholder
+  `Colors.grey` có từ S2-01 làm guideline fail
+  (≈ 2.7 < 4.5); chồng này không tự sửa màu vì
+  sửa là đổi golden `word_play.png` (đụng
+  SA-J4-7). Khuyến nghị chồng nhỏ riêng:
+  `grey.shade700` + sinh lại golden + ca
+  textContrast cho màn word.
+- Kiểm chứng tại máy: `evaluate.sh S2` PASS mọi
+  cổng local (pre-check S2-01..04 OK, content
+  validator PASS, purity PASS, tests lock PASS,
+  analyze PASS, **250/250 test** = 234 cũ + 16
+  ca mới, engine coverage **92,4%**);
+  `evaluate.sh S1` cũng PASS tương tự — không
+  regress. Cổng integration fail tại máy chỉ vì
+  không có device (cổng CI). Golden KHÔNG đổi:
+  `theme_select.png` `4f435443…` +
+  `word_play.png` `150c61ba…` khớp tests.lock và
+  cả hai ca golden pass tại máy. Diff `test/` +
+  `integration_test/` + `tests.lock` giữa nhánh
+  test và feat: rỗng (hash 4 file test khớp bản
+  đã khóa trên nhánh test).
+
 ## 2026-11-29 — S2-04: test đã khóa (James)
 
 - PR `test/S2-04` (xếp chồng trên contract):
