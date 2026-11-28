@@ -2,6 +2,31 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-28 — S1-05: mở contract (James)
+
+- `harness/contracts/S1-05.md`: ghi 8 chốt của
+  Opus (comment `7235735330`, SA-S5-1..SA-S5-8,
+  chốt theo khuyến nghị ở cổng `7235640949`) —
+  content thật tối thiểu `a1p1` (The Met 435703,
+  "Weaning the Calves", Rosa Bonheur 1879, CC0) +
+  pubspec `- content/`; seed `GAME_SEED` cho
+  Maestro; `CompletionScreen` push sau
+  `markSolved`; `onCompleted(Duration)` +
+  Stopwatch + cập nhật WID-JP-10; một `ProgressDao`
+  dùng chung trong app shell; nhãn `<n> solved` +
+  WID-TS-01b; Maestro chỉ bàn giao flow; test
+  WID-CP-01..06 + INT-CS-01..03. Ba điều chỉnh chữ
+  ghi rõ trong contract: `asset.title` thay
+  `asset.name` trong phác SA-S5-5, khóa asset
+  `'content/' + playPath` (S1-01 §4), nhãn thẻ giữ
+  hậu tố `, locked` của SA-UI-7 sau phần solved.
+- Cùng PR: khối pre-check `S1-05` trong
+  `tool/check_e_step.sh` + thêm vào `precheck_s1`
+  của `tool/evaluate.sh`.
+- Kiểm chứng tại máy: pre-check S1-05 fail đúng lý
+  do đầu tiên (`test/features/completion/` chưa
+  có); S1-01..04 vẫn OK.
+
 ## 2026-11-28 — S1-04: test đã khóa, màn chơi đã code (James)
 
 - PR `test/S1-04`: `jigsaw_play_test.dart`

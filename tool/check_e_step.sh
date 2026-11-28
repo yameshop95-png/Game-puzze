@@ -265,6 +265,84 @@ if [ "$STEP" = "S1-04" ]; then
   echo "check_e_step: OK for $STEP"
   exit 0
 fi
+# S1-05 branch (contract S1-05 §9, SA-S5-8): same shape
+# as S1-01..04, for the completion feature. Checks:
+#   - test/features/completion/ exists;
+#   - the completion widget test, the app-shell flow
+#     test, the completion screen lib file and the
+#     Maestro flow all exist;
+#   - no skipped tests under test/features/completion
+#     or test/features/app_shell;
+#   - every WID-CP ID in the contract is declared in
+#     the completion test file and every INT-CS ID in
+#     the app-shell flow test file.
+if [ "$STEP" = "S1-05" ]; then
+  c_dir="test/features/completion"
+  c_test="$c_dir/completion_screen_test.dart"
+  a_dir="test/features/app_shell"
+  a_test="$a_dir/completion_flow_test.dart"
+  if [ ! -d "$c_dir" ]; then
+    echo "FAIL: $c_dir/ does not exist"
+    exit 1
+  fi
+  if [ ! -f "$c_test" ]; then
+    echo "FAIL: $c_test does not exist"
+    exit 1
+  fi
+  if [ ! -f "$a_test" ]; then
+    echo "FAIL: $a_test does not exist"
+    exit 1
+  fi
+  if [ ! -f lib/features/completion/completion_screen.dart ]; then
+    echo "FAIL: lib/features/completion/completion_screen.dart does not exist"
+    exit 1
+  fi
+  if [ ! -f .maestro/persistence_restart.yaml ]; then
+    echo "FAIL: .maestro/persistence_restart.yaml does not exist"
+    exit 1
+  fi
+  skip_hits=$( { grep -rnE "skip[[:space:]]*:" "$c_dir" "$a_dir" | grep -vE "skip[[:space:]]*:[[:space:]]*false([^A-Za-z0-9_]|$)" || true
+                 grep -rnE "@Skip\(|markTestSkipped\(" "$c_dir" "$a_dir" || true; } )
+  if [ -n "$skip_hits" ]; then
+    echo "FAIL: skipped tests found under $c_dir or $a_dir:"
+    echo "$skip_hits"
+    exit 1
+  fi
+  # check_ids greps the contract for one ID prefix and
+  # requires every such ID to be declared in the given
+  # file, joining lines that end in test( / testWidgets(
+  # onto the next line first (dart format wraps long
+  # names), mirroring the S1-04 block.
+  check_ids() {
+    local prefix="$1" file="$2"
+    local ids joined id
+    ids=$(grep -oE "${prefix}-[0-9]+" "$contract" | sort -u)
+    if [ -z "$ids" ]; then
+      echo "FAIL: no $prefix test IDs found in $contract"
+      exit 1
+    fi
+    joined=$(mktemp)
+    awk '
+      {
+        if (hold != "") { $0 = hold $0; hold = "" }
+        if ($0 ~ /(^|[^A-Za-z0-9_])(test|testWidgets)\([[:space:]]*$/) { hold = $0; next }
+        print
+      }
+      END { if (hold != "") print hold }' "$file" > "$joined"
+    for id in $ids; do
+      if ! grep -qE "^[[:space:]]*(test|testWidgets)\([[:space:]]*['\"]${id}([^0-9]|$)" "$joined"; then
+        echo "FAIL: contract test ID $id has no test() declaration in $file"
+        rm -f "$joined"
+        exit 1
+      fi
+    done
+    rm -f "$joined"
+  }
+  check_ids "WID-CP" "$c_test"
+  check_ids "INT-CS" "$a_test"
+  echo "check_e_step: OK for $STEP"
+  exit 0
+fi
 subdir=""
 case "$STEP" in
   E1) subdir="jigsaw" ;;
