@@ -2,6 +2,36 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-28 — S2-01: code xong, evaluate xanh (James)
+
+- PR `feat/S2-01-word-play`: loader + model thêm
+  `textEnWord`/`textEnAlt` (SA-WP-2/3); schema
+  pipeline thêm `en_word`/`en_alt` vào whitelist
+  của `text`; manifest a1p1 thêm `en_word` (không
+  thêm `en_alt`); `ModeSelectScreen` mới (thumb +
+  title, nút Words disable khi không có en_word);
+  `WordPlayScreen` mới (một cột cuộn, chip nút
+  thật key theo index+vùng, tự kiểm khi hàng đầy,
+  notice `Not quite — try rearranging`, Stopwatch
+  từ initState); shell nối đường vào qua mode
+  select và handler hoàn thành mode `word`
+  (markSolved trước CompletionScreen, Play again
+  dựng màn word mới). Header hai màn mới có
+  `errorBuilder` cho ảnh thumb (contract §14).
+- Kiểm chứng tại máy: `evaluate.sh S2` PASS mọi
+  cổng tất định (pre-check S2-01 OK, content
+  validator PASS, purity PASS, tests lock PASS,
+  analyze PASS, **217/217 test** = 199 cũ + 18
+  mới, engine coverage **92,4%**); `evaluate.sh
+  S1` cũng PASS tương tự — không regress. Cổng
+  integration fail tại máy chỉ vì "No devices
+  are connected" (Đ11 — cổng CI).
+- Golden `word_play.png` sha256 `150c61ba…`
+  (25.783 bytes) đã khóa trong tests.lock; PNG
+  chờ phòng upload qua GitHub web UI lên nhánh
+  test + feat (CI đỏ ở pre-check S2-01 tới khi
+  PNG lên đủ hai nhánh — tiền lệ S1-03).
+
 ## 2026-11-28 — S2-01: test đã khóa (James)
 
 - PR `test/S2-01`: `test/features/word_play/word_play_test.dart`

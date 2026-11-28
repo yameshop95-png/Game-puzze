@@ -27,6 +27,17 @@ class PuzzleAsset {
   final int level;
   final String title;
   final String textEn;
+
+  /// Câu ghép chữ đã biên tập (`text.en_word`, contract
+  /// S2-01 SA-WP-2): null khi bản ghi không có field —
+  /// asset đó không hỗ trợ word mode.
+  final String? textEnWord;
+
+  /// Các đáp án thay thế đầy đủ (`text.en_alt`, contract
+  /// S2-01 SA-WP-3): danh sách không sửa được, rỗng khi
+  /// bản ghi không có field. Luật cùng multiset khóa do
+  /// AnswerValidator (engine E4) giữ, không kiểm ở đây.
+  final List<String> textEnAlt;
   final String playPath;
   final String thumbPath;
   final String creator;
@@ -38,6 +49,8 @@ class PuzzleAsset {
     required this.level,
     required this.title,
     required this.textEn,
+    this.textEnWord,
+    this.textEnAlt = const [],
     required this.playPath,
     required this.thumbPath,
     required this.creator,
@@ -111,6 +124,39 @@ class AssetLoader {
     if (textEn.isEmpty) {
       throw const FormatException('manifest field "text.en" must not be empty');
     }
+    // SA-WP-2: text.en_word tùy chọn — có mặt thì phải là
+    // chuỗi không rỗng; vắng thì textEnWord là null.
+    String? textEnWord;
+    if (text.containsKey('en_word')) {
+      final value = _stringField(text, 'en_word');
+      if (value.isEmpty) {
+        throw const FormatException(
+          'manifest field "text.en_word" must not be empty',
+        );
+      }
+      textEnWord = value;
+    }
+    // SA-WP-3: text.en_alt tùy chọn — có mặt thì phải là
+    // mảng chuỗi không rỗng phần tử; vắng thì rỗng.
+    var textEnAlt = const <String>[];
+    if (text.containsKey('en_alt')) {
+      final rawAlt = text['en_alt'];
+      if (rawAlt is! List) {
+        throw const FormatException(
+          'manifest field "text.en_alt" must be an array',
+        );
+      }
+      final parsed = <String>[];
+      for (final element in rawAlt) {
+        if (element is! String || element.isEmpty) {
+          throw const FormatException(
+            'manifest field "text.en_alt" must contain only non-empty strings',
+          );
+        }
+        parsed.add(element);
+      }
+      textEnAlt = List<String>.unmodifiable(parsed);
+    }
     final creatorName = _stringField(creator, 'name');
     final institution = _stringField(source, 'institution');
 
@@ -120,6 +166,8 @@ class AssetLoader {
       level: level,
       title: title,
       textEn: textEn,
+      textEnWord: textEnWord,
+      textEnAlt: textEnAlt,
       playPath: 'packs/$theme/$level/$id/play.webp',
       thumbPath: 'packs/$theme/$level/$id/thumb.webp',
       creator: creatorName,
