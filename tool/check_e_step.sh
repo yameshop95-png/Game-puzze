@@ -663,6 +663,84 @@ if [ "$STEP" = "S2-03" ]; then
   echo "check_e_step: OK for $STEP"
   exit 0
 fi
+# S2-04 branch (contract S2-04 §7, SA-J4-7): same
+# shape as the S2-03 block, for Semantics + screen
+# reader support. Checks:
+#   - both lib files exist (the two play screens
+#     are edited in place — SA-J4-1/4);
+#   - the four test files exist;
+#   - no skipped tests under the four test
+#     directories;
+#   - every WID-JP ID in the contract is declared
+#     in the jigsaw widget test, every WID-WP ID
+#     in the word play test, every WID-TS ID in
+#     the theme select test and every WID-CP ID
+#     in the completion test (guideline cases live
+#     in each screen's own file, SA-J4-7).
+if [ "$STEP" = "S2-04" ]; then
+  j_test="test/features/jigsaw_play/jigsaw_play_test.dart"
+  w_test="test/features/word_play/word_play_test.dart"
+  t_test="test/features/theme_select/theme_select_test.dart"
+  c_test="test/features/completion/completion_screen_test.dart"
+  if [ ! -f lib/features/jigsaw_play/jigsaw_play_screen.dart ]; then
+    echo "FAIL: lib/features/jigsaw_play/jigsaw_play_screen.dart does not exist"
+    exit 1
+  fi
+  if [ ! -f lib/features/word_play/word_play_screen.dart ]; then
+    echo "FAIL: lib/features/word_play/word_play_screen.dart does not exist"
+    exit 1
+  fi
+  for s_file in "$j_test" "$w_test" "$t_test" "$c_test"; do
+    if [ ! -f "$s_file" ]; then
+      echo "FAIL: $s_file does not exist"
+      exit 1
+    fi
+  done
+  skip_hits=$( { grep -rnE "skip[[:space:]]*:" test/features/jigsaw_play test/features/word_play test/features/theme_select test/features/completion | grep -vE "skip[[:space:]]*:[[:space:]]*false([^A-Za-z0-9_]|$)" || true
+                 grep -rnE "@Skip\(|markTestSkipped\(" test/features/jigsaw_play test/features/word_play test/features/theme_select test/features/completion || true; } )
+  if [ -n "$skip_hits" ]; then
+    echo "FAIL: skipped tests found under the S2-04 test directories:"
+    echo "$skip_hits"
+    exit 1
+  fi
+  # check_ids mirrors the S2-03 block: grep the
+  # contract for one ID prefix and require every
+  # such ID to be declared in the given file,
+  # joining lines that end in test( / testWidgets(
+  # onto the next line first (dart format wraps
+  # long names).
+  check_ids() {
+    local prefix="$1" file="$2"
+    local ids joined id
+    ids=$(grep -oE "${prefix}-[0-9]+" "$contract" | sort -u)
+    if [ -z "$ids" ]; then
+      echo "FAIL: no $prefix test IDs found in $contract"
+      exit 1
+    fi
+    joined=$(mktemp)
+    awk '
+      {
+        if (hold != "") { $0 = hold $0; hold = "" }
+        if ($0 ~ /(^|[^A-Za-z0-9_])(test|testWidgets)\([[:space:]]*$/) { hold = $0; next }
+        print
+      }
+      END { if (hold != "") print hold }' "$file" > "$joined"
+    for id in $ids; do
+      if ! grep -qE "^[[:space:]]*(test|testWidgets)\([[:space:]]*['\"]${id}([^0-9]|$)" "$joined"; then
+        echo "FAIL: contract test ID $id has no test() declaration in $file"
+        rm -f "$joined"
+        exit 1
+      fi
+    done
+    rm -f "$joined"
+  }
+  check_ids "WID-JP" "$j_test"
+  check_ids "WID-WP" "$w_test"
+  check_ids "WID-TS" "$t_test"
+  check_ids "WID-CP" "$c_test"
+  echo "check_e_step: OK for $STEP"
+  exit 0
+fi
 subdir=""
 case "$STEP" in
   E1) subdir="jigsaw" ;;

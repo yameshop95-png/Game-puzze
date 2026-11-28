@@ -2,6 +2,61 @@
 
 Định dạng: ngày, giai đoạn, ai làm, đã xong gì, kiểm chứng bằng gì, còn treo gì.
 
+## 2026-11-29 — S2-04: mở contract (James)
+
+- `harness/contracts/S2-04.md`: ghi 8 chốt của
+  Opus (comment `7241495251`, SA-J4-1..SA-J4-8,
+  chốt theo khuyến nghị ở cổng `7241211352`) —
+  Semantics + trình đọc màn hình: overlay
+  Semantics trong suốt (IgnorePointer) theo rect
+  hiện tại của từng mảnh, painter/engine không
+  đổi (SA-J4-1); nhãn theo vị trí HIỆN TẠI + số
+  khay E3 3.4, không lộ ô nhà, hậu tố
+  `, selected` (SA-J4-2); announce khi đặt đúng +
+  khi hoàn thành qua `sendAnnouncement` từ
+  `_resolvePlacement`, không announce khi
+  chọn/đặt sai (SA-J4-3); word mode làm đủ
+  SA-WP-9 — nhãn chip theo zone/vị trí, 2 zone là
+  Semantics container, notice liveRegion,
+  announce khi câu đúng (SA-J4-4); node mảnh/ô
+  trống có `onTap` dùng lại rẽ nhánh `_handleTap`
+  để TalkBack thao tác được (SA-J4-5); guideline
+  theo SA-J4-6; bộ test WID-JP-29..36 +
+  WID-WP-13..18 + WID-TS-11 + WID-CP-07, golden
+  KHÔNG đổi (SA-J4-7); TalkBack thủ công của Paul
+  ghi CHỜ, không chặn merge/đóng S2 (SA-J4-8).
+- **Ngôn ngữ nhãn (ghi rõ trong contract §0):**
+  comment chốt viết mẫu nhãn bằng tiếng Việt vì
+  thảo luận trên issue bằng tiếng Việt; game là
+  English only nên contract lấy mẫu tiếng Anh
+  của cổng `7241211352` làm chuẩn, ánh xạ 1-1
+  (vd `Piece N, in tray, not placed`,
+  `Piece 5 placed correctly`, `Puzzle completed`)
+  — chờ Opus xác nhận khi soát chồng. Mẫu nhãn ô
+  trống `Empty cell, row R column C` và mẫu
+  announce hoàn thành của word `Puzzle completed`
+  cũng là điểm contract tự chốt, ghi rõ.
+- **Điểm lệch SA-J4-6 có bằng chứng (contract
+  §8):** probe thật trên main `a3e1e6da` trước
+  khi viết contract — 4/5 màn pass cả
+  textContrast + labeledTapTarget; **màn word
+  FAIL textContrast** vì placeholder
+  `Tap the words below to build your sentence`
+  màu `Colors.grey` (≈ 2.7 < 4.5), vi phạm có từ
+  S2-01. Sửa màu sẽ đổi golden `word_play.png` —
+  đụng chốt SA-J4-7 — nên chồng này KHÔNG tự sửa
+  màu, WID-WP-18 chỉ khóa labeledTapTarget cho
+  màn word, và điểm này chờ Opus quyết (khuyến
+  nghị: chồng nhỏ riêng — `grey.shade700` + sinh
+  lại golden + thêm ca textContrast word).
+- Khối pre-check `S2-04` trong
+  `tool/check_e_step.sh` + thêm `S2-04` vào
+  `precheck_s2` trong `tool/evaluate.sh`. Ở giai
+  đoạn contract, pre-check S2-04 fail đúng lý do
+  đầu tiên (WID-JP-29 chưa khai báo — test viết ở
+  nhánh test xếp chồng tiếp theo); các pre-check
+  S2-01..03 vẫn OK.
+
 ## 2026-11-28 — S2-03: code xong, evaluate xanh (James)
 
 - PR `feat/S2-03-grid-sizes`: chỉ sửa 2 file lib
